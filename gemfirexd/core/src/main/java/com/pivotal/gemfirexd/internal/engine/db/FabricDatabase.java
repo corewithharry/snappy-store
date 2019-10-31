@@ -452,7 +452,7 @@ public final class FabricDatabase implements ModuleControl,
           .getTransactionExecute();
 
       if (this.memStore.isSnappyStore()) {
-        this.memStore.setGlobalCmdRgn(createSnappySpecificGlobalCmdRegion(
+        this.memStore.setMetadataCmdRgn(createSnappySpecificMetadataCmdRegion(
             !this.memStore.isDataDictionaryPersistent()));
       }
 
@@ -567,7 +567,7 @@ public final class FabricDatabase implements ModuleControl,
 
   }
 
-  private Region createSnappySpecificGlobalCmdRegion(boolean isLead) throws IOException, ClassNotFoundException {
+  private Region createSnappySpecificMetadataCmdRegion(boolean isLead) throws IOException, ClassNotFoundException {
     GemFireCacheImpl cache = Misc.getGemFireCache();
     final com.gemstone.gemfire.cache.AttributesFactory<?, ?> afact
         = new com.gemstone.gemfire.cache.AttributesFactory<>();
