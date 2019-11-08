@@ -90,14 +90,14 @@ public class GetLeadNodeInfoAsStringMessage extends MemberExecutorMessage<Object
             SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_QUERYDISTRIB,
                 "GetLeadNodeInfoAsStringMessage - case EXPORT_DATA");
           }
-          result = dumpData();
+          result = exportData();
           break;
         case EXPORT_DDLS:
           if (GemFireXDUtils.TraceQuery) {
             SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_QUERYDISTRIB,
                 "GetLeadNodeInfoAsStringMessage - case EXPORT_DDLS");
           }
-          result = dumpDDLs();
+          result = exportDDLs();
           break;
         case GENERATE_LOAD_SCRIPTS:
           if (GemFireXDUtils.TraceQuery) {
@@ -118,14 +118,14 @@ public class GetLeadNodeInfoAsStringMessage extends MemberExecutorMessage<Object
   }
 
 
-  private String dumpData() {
-    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks().dumpData(connID,
+  private String exportData() {
+    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks().exportData(connID,
         additionalArgs[0].toString(), additionalArgs[1].toString(), additionalArgs[2].toString(), Boolean.parseBoolean(additionalArgs[3].toString()));
     return "Data recovered";
   }
 
-  private String dumpDDLs() {
-    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks().dumpDDLs(connID, additionalArgs[0].toString());
+  private String exportDDLs() {
+    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks().exportDDLs(connID, additionalArgs[0].toString());
     return "DDLs recovered.";
   }
 
