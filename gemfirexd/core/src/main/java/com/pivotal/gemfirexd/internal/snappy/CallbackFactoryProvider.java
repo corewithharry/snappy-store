@@ -60,6 +60,11 @@ public abstract class CallbackFactoryProvider {
     }
 
     @Override
+    public InterpreterExecute getInterpreterExecution(String sql, Version v, Long connId) {
+      return null;
+    }
+
+    @Override
     public void dumpData(Long connId, String exportUri, String formatType, String tableNames, Boolean ignoreError){
     }
 

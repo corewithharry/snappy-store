@@ -83,7 +83,7 @@ public class JDBCDisplayUtil {
 	static private int maxWidth = 128;
     static public boolean showSelectCount = false;
 	static public boolean showSelectRows = true; //GemStone Addition
-
+    static public boolean INTERPRETER_MODE = false;
     static {
         // initialize the locale support functions to default value of JVM 
         LocalizedResource.getInstance();
@@ -434,8 +434,11 @@ public class JDBCDisplayUtil {
         }
         try {
 // GemStone changes END
-        int len = indent_DisplayBanner(out,rsmd, indentLevel, displayColumns,
-                                       displayColumnWidths);
+		  int len = 0;
+		  if (!INTERPRETER_MODE) {
+		    len = indent_DisplayBanner(out, rsmd, indentLevel, displayColumns,
+		      displayColumnWidths);
+		  }
 
         // When displaying rows, keep going past errors
         // unless/until the maximum # of errors is reached.
@@ -473,7 +476,8 @@ public class JDBCDisplayUtil {
                 }
             }
         }
-        if (showSelectCount == true) {
+        boolean showSelectOutput = showSelectCount && !INTERPRETER_MODE;
+        if (showSelectOutput == true) {
             if (numberOfRowsSelected == 1) {
                 out.println();
                 indentedPrintLine(out, indentLevel,
@@ -485,6 +489,7 @@ public class JDBCDisplayUtil {
                             LocalizedResource.getNumber(numberOfRowsSelected)));
             }
         }
+        if (INTERPRETER_MODE) out.println();
 
         DisplayNestedResults(out, nestedResults, conn, indentLevel,
             reader /* GemStoneAddition */, timer /* GemStoneAddition */);
@@ -1108,8 +1113,11 @@ public class JDBCDisplayUtil {
 		if(displayColumnWidths == null)
 			displayColumnWidths = getColumnDisplayWidths(rsmd, displayColumns, false);
 
-		int len = indent_DisplayBanner(out,rsmd, indentLevel, displayColumns,
-									   displayColumnWidths);
+		int len = 0;
+		if (!INTERPRETER_MODE) {
+		  len = indent_DisplayBanner(out, rsmd, indentLevel, displayColumns,
+		    displayColumnWidths);
+		}
 
 		// When displaying rows, keep going past errors
 		// unless/until the maximum # of errors is reached.
@@ -1135,7 +1143,7 @@ public class JDBCDisplayUtil {
 					ShowSQLException(out, e);
 			}
 		}
-		if (showSelectCount == true) {
+		if (showSelectCount == true && !INTERPRETER_MODE) {
 		   if (numberOfRowsSelected == 1) {
 			   out.println();
 			   indentedPrintLine( out, indentLevel, "1 row selected");

@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.sql.SQLException;
 import java.util.Arrays;
 import java.util.Set;
+import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import com.gemstone.gemfire.DataSerializer;
@@ -51,6 +52,7 @@ import com.pivotal.gemfirexd.internal.iapi.types.SQLDecimal;
 import com.pivotal.gemfirexd.internal.impl.sql.GenericParameterValueSet;
 import com.pivotal.gemfirexd.internal.shared.common.reference.SQLState;
 import com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider;
+import com.pivotal.gemfirexd.internal.snappy.InterpreterExecute;
 import com.pivotal.gemfirexd.internal.snappy.LeadNodeExecutionContext;
 import com.pivotal.gemfirexd.internal.snappy.SparkSQLExecute;
 import org.apache.log4j.Logger;
@@ -130,9 +132,13 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
 
   @Override
   protected void execute() throws Exception {
+
     ClassLoader origLoader = Thread.currentThread().getContextClassLoader();
     CallbackFactoryProvider.getClusterCallbacks().setLeadClassLoader();
+
     try {
+
+      if (interpreterExecution()) return ;
       if (isPreparedStatement() && !isPreparedPhase()) {
         getParams();
       }
@@ -164,6 +170,21 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
     } finally {
       Thread.currentThread().setContextClassLoader(origLoader);
     }
+  }
+
+  private boolean interpreterExecution() {
+    if (sql.startsWith("intp") || sql.startsWith("interpreter")
+       || sql.startsWith("INTP") || sql.startsWith("INTERPRETER")) {
+      InternalDistributedMember member = this.getSenderForReply();
+      final Version v = member.getVersionObject();
+      InterpreterExecute intpexec =
+              CallbackFactoryProvider.getClusterCallbacks().getInterpreterExecution(sql, v, ctx.getConnId());
+      String[] results = intpexec.execute();
+      SnappyResultHolder srh = new SnappyResultHolder(results);
+      this.lastResult(srh);
+      return true;
+    }
+    return false;
   }
 
   private static class SparkExceptionWrapper extends Exception {

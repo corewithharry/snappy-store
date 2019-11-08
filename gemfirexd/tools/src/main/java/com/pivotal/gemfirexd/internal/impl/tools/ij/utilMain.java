@@ -52,7 +52,6 @@ import com.pivotal.gemfirexd.internal.shared.common.sanity.SanityManager;
 import com.pivotal.gemfirexd.internal.tools.JDBCDisplayUtil;
 import jline.console.ConsoleReader;
 
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Stack;
@@ -130,7 +129,7 @@ public class utilMain implements java.security.PrivilegedAction {
 	static String basePrompt = "gfxd";
 
 	public static void setBasePrompt(String prompt) {
-		if (prompt != null && prompt.trim().length() >= 3 && prompt.trim().length() <= 10) {
+		if (prompt != null && prompt.trim().length() >= 3 && prompt.trim().length() <= 15) {
 			basePrompt = prompt.trim();
 		}
 	}
@@ -227,6 +226,12 @@ public class utilMain implements java.security.PrivilegedAction {
 	}
 
 
+	private static String INTERPRETER_PREFIX = "intp options() code ";
+	private String getInterpreterPrefixCmdString(String command) {
+	  return INTERPRETER_PREFIX + command;
+	}
+
+	private boolean isInterpreterMode = false;
 	/**
 	 * run ij over the specified input, sending output to the
 	 * specified output. Any prior input and output will be lost.
@@ -238,6 +243,11 @@ public class utilMain implements java.security.PrivilegedAction {
 	public void go(LocalizedInput[] in, LocalizedOutput out,
 				   Properties connAttributeDefaults) throws ijFatalException
 	{
+		String intpModeProperty = System.getProperty("LAUNCHER_INTERPRETER_MODE");
+		isInterpreterMode = intpModeProperty != null
+		  && intpModeProperty.equals("true") ? true : false;
+		if (isInterpreterMode) JDBCDisplayUtil.INTERPRETER_MODE = true;
+
 		this.out = out;
 		this.connAttributeDefaults = connAttributeDefaults;
 		
@@ -270,9 +280,11 @@ public class utilMain implements java.security.PrivilegedAction {
 				version = "?";
 			}
 			*/
-			out.println(convertGfxdMessageToSnappy(
-					langUtil.getTextMessage("IJ_IjVers30C199", GemFireVersion.getProductVersion() + " " +
-							GemFireVersion.getProductReleaseStage())));
+			if (!isInterpreterMode) {
+			  out.println(convertGfxdMessageToSnappy(
+			    langUtil.getTextMessage("IJ_IjVers30C199", GemFireVersion.getProductVersion() + " " +
+			    GemFireVersion.getProductReleaseStage())));
+			}
 			// GemStone changes END
 			for (int i = connEnv.length - 1; i >= 0; i--) { // print out any initial warnings...
 				Connection c = connEnv[i].getConnection();
@@ -763,6 +775,11 @@ public class utilMain implements java.security.PrivilegedAction {
 				beginTime = System.currentTimeMillis();
 			}
 
+			// Here is where the command is sent to server
+			// so just prepend the intp prefix if in interpreter mode
+			if (isInterpreterMode) {
+			  command = getInterpreterPrefixCmdString(command);
+			}
 			ijResult result = ijParser.executeImmediate(command);
                         if (ijParser.getExplainMode() && command.startsWith("explain ")) {
                           redirected = RedirectedLocalizedOutput.getNewInstance();
