@@ -191,6 +191,6 @@ uint32_t ColumnDescriptor::getDisplaySize() const noexcept {
       return (size > 0 ? size : 30);
     default:
       size = getPrecision();
-      return (size > 0 ? size : 15);
+      return (size > 0 ? (size + 2) : 15);
   }
 }
