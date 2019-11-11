@@ -128,6 +128,19 @@ public class utilMain implements java.security.PrivilegedAction {
 
 	static String basePrompt = "gfxd";
 
+	private static String incompleteprompt = null;
+	static String getIncompletePrompt() {
+		if (incompleteprompt != null) return incompleteprompt;
+		StringBuilder sb = new StringBuilder();
+		int basePromptLength = basePrompt.length();
+		for (int i=0; i<basePromptLength; i++) {
+			sb.append(" ");
+		}
+		sb.append("|");
+		incompleteprompt = sb.toString();
+		return incompleteprompt;
+	}
+
 	public static void setBasePrompt(String prompt) {
 		if (prompt != null && prompt.trim().length() >= 3 && prompt.trim().length() <= 15) {
 			basePrompt = prompt.trim();
@@ -985,7 +998,7 @@ public class utilMain implements java.security.PrivilegedAction {
 	 {
 		if (newStatement) {
 // GemStone changes BEGIN
-				out.print(basePrompt + (tag == null ? "" : tag) + "> ");
+					out.print(basePrompt + (tag == null ? "" : tag) + "> ");
 	  		/* (original code)
 	  		out.print("ij"+(tag==null?"":tag)+"> ");
 	  		*/
@@ -1000,7 +1013,12 @@ public class utilMain implements java.security.PrivilegedAction {
 // GemStone changes BEGIN
 	static String getPrompt(boolean newStatement, String tag) {
 	  if (newStatement) {
-	    return basePrompt + tag + "> ";
+		  if (JDBCDisplayUtil.lastWasIncomplete) {
+			  JDBCDisplayUtil.lastWasIncomplete = false;
+			  return getIncompletePrompt();
+		  } else {
+			  return basePrompt + tag + "> ";
+		  }
 	  }
 	  return "> ";
 	}
