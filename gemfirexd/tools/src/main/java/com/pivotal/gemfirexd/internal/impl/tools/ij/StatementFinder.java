@@ -42,6 +42,7 @@ package com.pivotal.gemfirexd.internal.impl.tools.ij;
 
 import com.pivotal.gemfirexd.internal.iapi.tools.i18n.LocalizedInput;
 import com.pivotal.gemfirexd.internal.iapi.tools.i18n.LocalizedOutput;
+import com.pivotal.gemfirexd.internal.tools.JDBCDisplayUtil;
 import com.pivotal.gemfirexd.tools.internal.MiscTools;
 import jline.console.ConsoleReader;
 
@@ -216,6 +217,9 @@ public class StatementFinder {
 		  for (;;) {
 		    try {
 		      line = this.consoleReader.readLine(prompt);
+		      if (JDBCDisplayUtil.INTERPRETER_MODE) {
+		        return line;
+		      }
 		    } catch (java.io.IOException ioe) {
 		      throw ijException.iOException(ioe);
 		    }
