@@ -367,7 +367,6 @@ size_t Decimal::toString(std::string& str) const {
   }
   mpz_get_str(bufp, 10, m_bigInt);
   ndigits = strlen(bufp);// to get exact size
-  // now the three cases of '.' inside, before and not at all
   const bool neg = (*bufp == '-');
   if (neg) ndigits--;
   if (m_scale == 0) {
@@ -375,6 +374,7 @@ size_t Decimal::toString(std::string& str) const {
     return (ndigits + neg);
   }
   // check for sign (using signed version of size_t)
+  // now the three cases of '.' inside, before and not at all
   ptrdiff_t wholeDigits = (ndigits - m_scale);
   if (wholeDigits > 0) {
     size_t wholeDigitsWithSign = static_cast<size_t>(wholeDigits + neg);

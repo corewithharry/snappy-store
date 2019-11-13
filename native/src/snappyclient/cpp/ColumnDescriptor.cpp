@@ -189,8 +189,11 @@ uint32_t ColumnDescriptor::getDisplaySize() const noexcept {
     case thrift::SnappyType::BLOB:
       size = (2 * getPrecision());
       return (size > 0 ? size : 30);
-    default:
+    case thrift::SnappyType::DECIMAL:
       size = getPrecision();
       return (size > 0 ? (size + 2) : 15);
+    default:
+      size = getPrecision();
+      return (size > 0 ? size : 15);
   }
 }
