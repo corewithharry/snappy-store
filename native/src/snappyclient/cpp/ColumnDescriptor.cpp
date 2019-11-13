@@ -191,7 +191,8 @@ uint32_t ColumnDescriptor::getDisplaySize() const noexcept {
       return (size > 0 ? size : 30);
     case thrift::SnappyType::DECIMAL:
       size = getPrecision();
-      return (size > 0 ? (size + 2) : 15);
+      // As per microsoft document for Dispaly Size, for decimal type display size = precision + 2
+      return (size + 2);
     default:
       size = getPrecision();
       return (size > 0 ? size : 15);
