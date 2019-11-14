@@ -370,6 +370,7 @@ size_t Decimal::toString(std::string& str) const {
   * mpz_sizeinbase, as per its implementation, it could return the exact size or 1 too big.
   * for values like -66 or other negative values it returns 3 instead of 2.
   * As solution of this using strlen
+  * Fixed- JIRA SDENT-76
   */
   ndigits = strlen(bufp);
   const bool neg = (*bufp == '-');

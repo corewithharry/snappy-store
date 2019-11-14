@@ -192,6 +192,7 @@ uint32_t ColumnDescriptor::getDisplaySize() const noexcept {
     case thrift::SnappyType::DECIMAL:
       size = getPrecision();
       // As per microsoft document for Dispaly Size, for decimal type display size = precision + 2
+      // Fixed- JIRA SDENT-76
       return (size + 2);
     default:
       size = getPrecision();
