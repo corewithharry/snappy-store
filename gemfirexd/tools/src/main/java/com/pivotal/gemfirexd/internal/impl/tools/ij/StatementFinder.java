@@ -43,12 +43,13 @@ package com.pivotal.gemfirexd.internal.impl.tools.ij;
 import com.pivotal.gemfirexd.internal.iapi.tools.i18n.LocalizedInput;
 import com.pivotal.gemfirexd.internal.iapi.tools.i18n.LocalizedOutput;
 import com.pivotal.gemfirexd.internal.tools.JDBCDisplayUtil;
+import com.pivotal.gemfirexd.tools.GfxdUtilLauncher;
 import com.pivotal.gemfirexd.tools.internal.MiscTools;
 import jline.console.ConsoleReader;
 
 import java.io.IOException;
 import java.io.Reader;
-import java.util.Iterator;
+import java.util.ArrayList;
 import java.util.Map;
 
 /**
@@ -190,6 +191,26 @@ public class StatementFinder {
 		source.close();
 	}
 
+	public static String preProcessIntpLine(String origline) {
+		if (origline != null) {
+			String trimmedOrignalLC = origline.trim().toLowerCase();
+			for (String cmd : commandsToStripColonPrefix) {
+				String colonCommand = ":" + cmd;
+				if (trimmedOrignalLC.startsWith(colonCommand) && cmd.equals("run")) {
+					return trimmedOrignalLC.substring(1);
+				}
+				if (colonCommand.startsWith(trimmedOrignalLC)) {
+					return cmd;
+				}
+			}
+
+		}
+		return origline;
+	}
+
+	// User will give as :command but these will be executed locally
+	public final static String[] commandsToStripColonPrefix =
+		new String[] {"elapsedtime on", "quit", "run"};
 	/**
 		get the next statement in the input stream. Returns it,
 		dropping its closing semicolon if it has one. If there is
@@ -198,20 +219,45 @@ public class StatementFinder {
 		@return the next statement in the input stream.
 	 */
 // GemStone changes BEGIN
+	String cachedPrompt = null;
+
 	public String nextStatement(final ConnectionEnv connEnv,
 	    final LocalizedOutput out) {
 	/* (original code)
 	public String nextStatement() {
 	*/
+		String prompt = null;
+	if (JDBCDisplayUtil.lastWasIncomplete) {
+	  prompt = utilMain.getIncompletePrompt();
+	  JDBCDisplayUtil.lastWasIncomplete = false;
+	} else {
+		prompt = cachedPrompt;
+		if (prompt == null && connEnv != null) {
+			prompt = connEnv.getPrompt(true);
+			cachedPrompt = prompt;
+		}
+	}
+	  if (JDBCDisplayUtil.INTERPRETER_MODE && GfxdUtilLauncher.connectStr != null && doPrompt) {
+	    String connStr =  GfxdUtilLauncher.connectStr;
+	    GfxdUtilLauncher.connectStr = null;
+	    return connStr;
+	  }
+	  ArrayList<String> initialFiles = GfxdUtilLauncher.initialRunFiles;
+	  if (JDBCDisplayUtil.INTERPRETER_MODE && initialFiles != null && !initialFiles.isEmpty() && doPrompt) {
+	    String runfile = initialFiles.get(0);
+	    initialFiles.remove(runfile);
+	    if (initialFiles.isEmpty()) {
+	    	GfxdUtilLauncher.initialRunFiles = null;
+		}
+	    System.out.println("\n\n***** Running input file " + runfile + " *****\n");
+	    return "run '" + runfile + "'";
+	  }
 		if (this.consoleReader != null) {
 		  this.statement.setLength(0);
 		  if (this.state == END_OF_INPUT) {
 		    return null;
 		  }
-		  String prompt = null;
-		  if (connEnv != null) {
-		    prompt = connEnv.getPrompt(true);
-		  }
+
 		  String line = null;
 		OUTER:
 		  for (;;) {

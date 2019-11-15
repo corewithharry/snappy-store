@@ -84,6 +84,8 @@ public class JDBCDisplayUtil {
     static public boolean showSelectCount = false;
 	static public boolean showSelectRows = true; //GemStone Addition
     static public boolean INTERPRETER_MODE = false;
+	static public boolean BEFORE_CONNECT = true;
+    static public boolean INITIAL_CMD_IN_PROGRESS = true;
 	static public  boolean lastWasIncomplete = false;
     static {
         // initialize the locale support functions to default value of JVM 
