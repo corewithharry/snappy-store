@@ -59,7 +59,7 @@ allprojects {
     pxfVersion = '2.5.1.0'
     osgiVersion = '6.0.0'
     jettyVersion = '9.2.26.v20180806'
-    hadoopVersion = '3.2.1'
+    hadoopVersion = '3.2.0'
     protobufVersion = '2.6.1'
     kryoVersion = '4.0.2'
     thriftVersion = '0.9.3'
