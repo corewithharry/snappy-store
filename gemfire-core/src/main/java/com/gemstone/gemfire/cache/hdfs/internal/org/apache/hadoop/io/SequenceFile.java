@@ -1274,7 +1274,7 @@ public class SequenceFile {
     @Deprecated
     public void syncFs() throws IOException {
       if (out != null) {
-        out.sync();                               // flush contents to file system
+        out.hsync();                               // flush contents to file system
       }
     }
 

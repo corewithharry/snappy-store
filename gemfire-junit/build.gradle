@@ -55,6 +55,7 @@ dependencies {
   compile "org.apache.hadoop:hadoop-auth:${hadoopVersion}"
   compile "org.apache.hadoop:hadoop-common:${hadoopVersion}"
   compile "org.apache.hadoop:hadoop-hdfs:${hadoopVersion}"
+  compile "org.apache.hadoop:hadoop-hdfs-client:${hadoopVersion}"
   compile "org.apache.hadoop:hadoop-mapreduce-client-core:${hadoopVersion}"
   compile "com.google.protobuf:protobuf-java:${protobufVersion}"
   compile "org.apache.hbase:hbase-common:${hbaseVersion}"

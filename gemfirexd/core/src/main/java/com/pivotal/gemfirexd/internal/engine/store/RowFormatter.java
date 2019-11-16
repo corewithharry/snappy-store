@@ -100,7 +100,7 @@ import org.apache.spark.unsafe.types.UTF8String;
  * @author Rahul Dubey
  * @author swale
  */
-@SuppressWarnings("serial")
+@SuppressWarnings({ "serial", "WeakerAccess" })
 public final class RowFormatter implements Serializable {
 
   /*
@@ -179,7 +179,7 @@ public final class RowFormatter implements Serializable {
   /**
    * Number of bytes required for serializing {@link #TOKEN_RECOVERY_VERSION}.
    */
-  static final int TOKEN_RECOVERY_VERSION_BYTES = getCompactIntNumBytes(
+  private static final int TOKEN_RECOVERY_VERSION_BYTES = getCompactIntNumBytes(
       TOKEN_RECOVERY_VERSION);
 
   /**
@@ -1040,7 +1040,7 @@ public final class RowFormatter implements Serializable {
     this.isTableFormatter = false;
     this.isPrimaryKeyFormatter = false;
     SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_ROW_FORMATTER,
-        "RowFormatter#cqi#column[] = " + ArrayUtils.toString(this.columns));
+        "RowFormatter#cqi#column[] = " + ArrayUtils.toString((Object[])this.columns));
   }
 
   /**
@@ -1106,7 +1106,7 @@ public final class RowFormatter implements Serializable {
     }
     this.isPrimaryKeyFormatter = false;
     SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_ROW_FORMATTER,
-        "RowFormatter#const1#column[] = " + ArrayUtils.toString(this.columns));
+        "RowFormatter#const1#column[] = " + ArrayUtils.toString((Object[])this.columns));
   }
 
   /**
@@ -1226,7 +1226,7 @@ public final class RowFormatter implements Serializable {
     this.isTableFormatter = false;
     this.isPrimaryKeyFormatter = false;
     SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_ROW_FORMATTER,
-        "RowFormatter#const3#column[] = " + ArrayUtils.toString(this.columns));
+        "RowFormatter#const3#column[] = " + ArrayUtils.toString((Object[])this.columns));
   }
 
   /**
@@ -1288,13 +1288,9 @@ public final class RowFormatter implements Serializable {
     this.isTableFormatter = false;
     this.isPrimaryKeyFormatter = isPrimaryKeyFormatter;
     SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_ROW_FORMATTER,
-        "RowFormatter#const4#column[] = " + ArrayUtils.toString(this.columns));
+        "RowFormatter#const4#column[] = " + ArrayUtils.toString((Object[])this.columns));
   }
 
-  public void printColumnArray() {
-    SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_ROW_FORMATTER,
-        "RowFormatter#Recovery#column[] = " + ArrayUtils.toString(this.columns));
-  }
   /**
    * Get the fixed width, variable width and LOB column positions for this
    * formatter.

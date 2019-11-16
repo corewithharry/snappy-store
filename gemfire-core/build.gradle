@@ -69,6 +69,7 @@ dependencies {
   compileOnly("org.apache.hadoop:hadoop-auth:${hadoopVersion}")
   compileOnly("org.apache.hadoop:hadoop-common:${hadoopVersion}")
   compileOnly "org.apache.hadoop:hadoop-hdfs:${hadoopVersion}"
+  compileOnly "org.apache.hadoop:hadoop-hdfs-client:${hadoopVersion}"
   compileOnly "org.apache.hadoop:hadoop-mapreduce-client-core:${hadoopVersion}"
   compileOnly "com.google.protobuf:protobuf-java:${protobufVersion}"
   compileOnly "org.glassfish.jersey.core:jersey-server:${jerseyVersion}"
