@@ -544,6 +544,10 @@ public class utilMain implements java.security.PrivilegedAction {
 							printConnectUsage(command, out);
 						}
 					}
+                if (isInterpreterMode && "40XD0".equalsIgnoreCase(e.getSQLState())) {
+                    System.out.println("\nNot connected to cluster. Exiting...");
+                    System.exit(1);
+                }
 // GemStone changes END
     			} catch (ijException e) {
                     scriptErrorCount++;
@@ -873,6 +877,9 @@ public class utilMain implements java.security.PrivilegedAction {
 			// SQL exception occurred in ij's actions; print and continue
 			// unless it is considered fatal.
 			handleSQLException(out,e);
+			if ("40XD0".equalsIgnoreCase(e.getSQLState()) && JDBCDisplayUtil.INTERPRETER_MODE) {
+			    System.exit(1);
+            }
 	    } catch (ijException i) {
 // GemStone changes BEGIN
 	  		out.println(langUtil.getTextMessage("IJ_IjErro0_5",

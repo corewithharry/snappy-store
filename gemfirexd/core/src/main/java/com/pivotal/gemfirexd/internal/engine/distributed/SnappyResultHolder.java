@@ -30,6 +30,7 @@ import com.gemstone.gemfire.internal.ByteArrayDataInput;
 import com.gemstone.gemfire.internal.InternalDataSerializer;
 import com.gemstone.gemfire.internal.shared.Version;
 import com.pivotal.gemfirexd.internal.engine.GfxdDataSerializable;
+import com.pivotal.gemfirexd.internal.engine.distributed.execution.LeadNodeExecutionObject;
 import com.pivotal.gemfirexd.internal.engine.distributed.message.LeadNodeExecutorMsg;
 import com.pivotal.gemfirexd.internal.engine.jdbc.GemFireXDRuntimeException;
 import com.pivotal.gemfirexd.internal.iapi.error.StandardException;
@@ -215,8 +216,8 @@ public final class SnappyResultHolder extends GfxdDataSerializable {
 
   public String[] getTableNames() { return this.tableNames; }
 
-  public void prepareSend(LeadNodeExecutorMsg msg) {
-    this.exec.packRows(msg, this);
+  public void prepareSend(LeadNodeExecutorMsg msg, LeadNodeExecutionObject execObject) {
+    this.exec.packRows(msg, this, execObject);
   }
 
   public ExecRow getNextRow() {
@@ -378,7 +379,9 @@ public final class SnappyResultHolder extends GfxdDataSerializable {
         // TODO: what exception should be thrown? Check.
         throw new IllegalStateException("SnappyResultHolder: cannot handle type: " + storeType);
     }
-    dtds[colNum] = dtd;
+    if (dtds != null) {
+      dtds[colNum] = dtd;
+    }
     return dvd;
   }
 
