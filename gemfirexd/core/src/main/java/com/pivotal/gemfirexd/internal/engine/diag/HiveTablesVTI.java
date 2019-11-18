@@ -32,6 +32,7 @@ import java.util.concurrent.TimeUnit;
 import com.gemstone.gemfire.cache.execute.FunctionService;
 import com.gemstone.gemfire.internal.cache.ExternalTableMetaData;
 import com.gemstone.gemfire.internal.shared.SystemProperties;
+import com.google.common.collect.Iterators;
 import com.pivotal.gemfirexd.internal.catalog.ExternalCatalog;
 import com.pivotal.gemfirexd.internal.engine.GfxdVTITemplate;
 import com.pivotal.gemfirexd.internal.engine.GfxdVTITemplateNoAllNodesRoute;
@@ -78,10 +79,8 @@ public class HiveTablesVTI extends GfxdVTITemplate
           (hiveCatalog = Misc.getMemStore().getExternalCatalog()) != null) {
         try {
           List<ExternalTableMetaData> catalogTables = hiveCatalog.getCatalogTables();
-          if (!Misc.isLead() && GemFireXDUtils.getMyProfile(true).isHiveEnabled()) {
-            catalogTables.addAll(getExternalHiveTables());
-          }
-          this.tableMetas = catalogTables.iterator();
+          Collection<ExternalTableMetaData> externalHiveTables = getExternalHiveTables();
+          this.tableMetas = Iterators.concat(catalogTables.iterator(), externalHiveTables.iterator());
         } catch (Exception e) {
           // log and move on
           logger.warn("ERROR in retrieving Hive tables: " + e.toString());
@@ -109,10 +108,14 @@ public class HiveTablesVTI extends GfxdVTITemplate
   }
 
   private Collection<ExternalTableMetaData> getExternalHiveTables() throws InterruptedException {
-    ArrayList result = (ArrayList)FunctionService.onMembers(Misc.getLeadNode())
-        .withArgs(0).execute(ExternalHiveTablesCollectorFunction.ID)
-        .getResult(300, TimeUnit.SECONDS);
-    return ((ExternalHiveTablesCollectorResult)(result).get(0)).getTablesMetadata();
+    if (!Misc.isLead() && GemFireXDUtils.getMyProfile(true).isHiveEnabled()) {
+      ArrayList result = (ArrayList)FunctionService.onMembers(Misc.getLeadNode())
+          .withArgs(0).execute(ExternalHiveTablesCollectorFunction.ID)
+          .getResult(10, TimeUnit.SECONDS);
+      return ((ExternalHiveTablesCollectorResult)(result).get(0)).getTablesMetadata();
+    } else {
+      return Collections.emptyList();
+    }
   }
 
   @Override
