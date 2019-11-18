@@ -36,6 +36,7 @@ import com.pivotal.gemfirexd.internal.catalog.ExternalCatalog;
 import com.pivotal.gemfirexd.internal.engine.GfxdVTITemplate;
 import com.pivotal.gemfirexd.internal.engine.GfxdVTITemplateNoAllNodesRoute;
 import com.pivotal.gemfirexd.internal.engine.Misc;
+import com.pivotal.gemfirexd.internal.engine.distributed.utils.GemFireXDUtils;
 import com.pivotal.gemfirexd.internal.engine.jdbc.GemFireXDRuntimeException;
 import com.pivotal.gemfirexd.internal.iapi.sql.ResultColumnDescriptor;
 import com.pivotal.gemfirexd.internal.iapi.types.HarmonySerialClob;
@@ -77,7 +78,7 @@ public class HiveTablesVTI extends GfxdVTITemplate
           (hiveCatalog = Misc.getMemStore().getExternalCatalog()) != null) {
         try {
           List<ExternalTableMetaData> catalogTables = hiveCatalog.getCatalogTables();
-          if (!Misc.isLead()) {
+          if (!Misc.isLead() && GemFireXDUtils.getMyProfile(true).isHiveEnabled()) {
             catalogTables.addAll(getExternalHiveTables());
           }
           this.tableMetas = catalogTables.iterator();
