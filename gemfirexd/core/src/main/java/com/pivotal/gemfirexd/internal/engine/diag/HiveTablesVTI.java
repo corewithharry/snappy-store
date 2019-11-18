@@ -86,7 +86,6 @@ public class HiveTablesVTI extends GfxdVTITemplate
           // log and move on
           logger.warn("ERROR in retrieving Hive tables: " + e.toString());
           this.tableMetas = Collections.emptyIterator();
-          throw new RuntimeException(e);
         }
       } else {
         this.tableMetas = Collections.emptyIterator();
