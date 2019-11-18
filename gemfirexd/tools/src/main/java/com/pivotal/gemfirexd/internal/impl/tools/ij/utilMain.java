@@ -544,10 +544,17 @@ public class utilMain implements java.security.PrivilegedAction {
 							printConnectUsage(command, out);
 						}
 					}
-                if (isInterpreterMode && "40XD0".equalsIgnoreCase(e.getSQLState())) {
-                    System.out.println("\nNot connected to cluster. Exiting...");
-                    System.exit(1);
-                }
+                    String sqlstate = e.getSQLState();
+                    if (isInterpreterMode && ("40XD0".equalsIgnoreCase(sqlstate) ||
+                      "08004".equalsIgnoreCase(sqlstate))) {
+                      System.out.println("\nNot connected to cluster. Exiting...");
+                      System.exit(1);
+                    }
+                    // Actually exit for anything when the state is before connect
+                    if (JDBCDisplayUtil.BEFORE_CONNECT) {
+                      System.out.println("\nNot connected to cluster. Exiting..."
+                      + e.getSQLState() + " " + e.getMessage());
+                    }
 // GemStone changes END
     			} catch (ijException e) {
                     scriptErrorCount++;

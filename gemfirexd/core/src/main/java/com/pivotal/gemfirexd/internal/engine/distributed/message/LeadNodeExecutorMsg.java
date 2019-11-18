@@ -149,11 +149,12 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
     if (sql != null) {
       if (sql.startsWith("intp") || sql.startsWith("interpreter")
               || sql.startsWith("INTP") || sql.startsWith("INTERPRETER")) {
+        String user = ctx.getUserName() != null ? ctx.getUserName().toLowerCase() : ctx.getUserName();
         InternalDistributedMember member = this.getSenderForReply();
         final Version v = member.getVersionObject();
         InterpreterExecute intpexec =
-                CallbackFactoryProvider.getClusterCallbacks().getInterpreterExecution(sql, v, ctx.getConnId());
-        String[] results = intpexec.execute();
+          CallbackFactoryProvider.getClusterCallbacks().getInterpreterExecution(sql, v, ctx.getConnId());
+        String[] results = intpexec.execute(user);
         SnappyResultHolder srh = new SnappyResultHolder(results);
         this.lastResult(srh);
         return true;
