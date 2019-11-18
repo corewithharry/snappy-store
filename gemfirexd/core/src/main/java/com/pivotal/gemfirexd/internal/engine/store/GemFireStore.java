@@ -99,6 +99,7 @@ import com.pivotal.gemfirexd.internal.engine.GemFireXDQueryObserverHolder;
 import com.pivotal.gemfirexd.internal.engine.GemFireXDQueryTimeStatistics;
 import com.pivotal.gemfirexd.internal.engine.GfxdConstants;
 import com.pivotal.gemfirexd.internal.engine.GfxdDataSerializable;
+import com.pivotal.gemfirexd.internal.snappy.hivetables.ExternalHiveTablesCollectorFunction;
 import com.pivotal.gemfirexd.internal.engine.Misc;
 import com.pivotal.gemfirexd.internal.engine.SigThreadDumpHandler;
 import com.pivotal.gemfirexd.internal.engine.access.GemFireTransaction;
@@ -1202,6 +1203,7 @@ public final class GemFireStore implements AccessFactory, ModuleControl,
       FunctionService.registerFunction(new QueryCancelFunction());
       FunctionService.registerFunction(new SnappyRegionStatsCollectorFunction());
       FunctionService.registerFunction(new DiskStoreIDs.DiskStoreIDFunction());
+      FunctionService.registerFunction(new ExternalHiveTablesCollectorFunction());
 
       final ConnectionSignaller signaller = ConnectionSignaller.getInstance();
       if (logger.fineEnabled()) {

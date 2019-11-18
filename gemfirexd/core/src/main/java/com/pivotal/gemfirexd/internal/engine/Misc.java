@@ -275,6 +275,10 @@ public abstract class Misc {
     throw new NoMemberFoundException("SnappyData Lead node is not available");
   }
 
+  public static boolean isLead(){
+    return GemFireXDUtils.getGfxdAdvisor().getMyProfile().hasSparkURL();
+  }
+
   /**
    * Check if {@link GemFireCache} is closed or is in the process of closing and
    * throw {@link CacheClosedException} if so.

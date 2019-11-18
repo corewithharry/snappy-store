@@ -21,10 +21,15 @@ import java.sql.Clob;
 import java.sql.ResultSetMetaData;
 import java.sql.SQLException;
 import java.sql.Types;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Iterator;
+import java.util.List;
 import java.util.ListIterator;
+import java.util.concurrent.TimeUnit;
 
+import com.gemstone.gemfire.cache.execute.FunctionService;
 import com.gemstone.gemfire.internal.cache.ExternalTableMetaData;
 import com.gemstone.gemfire.internal.shared.SystemProperties;
 import com.pivotal.gemfirexd.internal.catalog.ExternalCatalog;
@@ -40,6 +45,8 @@ import com.pivotal.gemfirexd.internal.impl.sql.catalog.GfxdDataDictionary;
 import com.pivotal.gemfirexd.internal.shared.common.SharedUtils;
 import com.pivotal.gemfirexd.internal.shared.common.reference.Limits;
 import com.pivotal.gemfirexd.internal.shared.common.reference.SQLState;
+import com.pivotal.gemfirexd.internal.snappy.hivetables.ExternalHiveTablesCollectorFunction;
+import com.pivotal.gemfirexd.internal.snappy.hivetables.dto.ExternalHiveTablesCollectorResult;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -69,11 +76,16 @@ public class HiveTablesVTI extends GfxdVTITemplate
       if (!GfxdDataDictionary.SKIP_CATALOG_OPS.get().skipHiveCatalogCalls &&
           (hiveCatalog = Misc.getMemStore().getExternalCatalog()) != null) {
         try {
-          this.tableMetas = hiveCatalog.getCatalogTables().iterator();
+          List<ExternalTableMetaData> catalogTables = hiveCatalog.getCatalogTables();
+          if (!Misc.isLead()) {
+            catalogTables.addAll(getExternalHiveTables());
+          }
+          this.tableMetas = catalogTables.iterator();
         } catch (Exception e) {
           // log and move on
           logger.warn("ERROR in retrieving Hive tables: " + e.toString());
           this.tableMetas = Collections.emptyIterator();
+          throw new RuntimeException(e);
         }
       } else {
         this.tableMetas = Collections.emptyIterator();
@@ -94,6 +106,13 @@ public class HiveTablesVTI extends GfxdVTITemplate
         return false;
       }
     }
+  }
+
+  private Collection<ExternalTableMetaData> getExternalHiveTables() throws InterruptedException {
+    ArrayList result = (ArrayList)FunctionService.onMembers(Misc.getLeadNode())
+        .withArgs(0).execute(ExternalHiveTablesCollectorFunction.ID)
+        .getResult(300, TimeUnit.SECONDS);
+    return ((ExternalHiveTablesCollectorResult)(result).get(0)).getTablesMetadata();
   }
 
   @Override

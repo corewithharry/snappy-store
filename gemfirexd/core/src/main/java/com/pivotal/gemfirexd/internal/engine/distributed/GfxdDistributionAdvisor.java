@@ -1336,6 +1336,13 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
      */
     private long usableHeap;
 
+    /**
+     * Flag indicating whether the external hive catalog is enabled. By default it's false.
+     * Set to true when hive session is initialized at
+     * org.apache.spark.sql.SnappyContext#newHiveSession().
+     */
+    private boolean hiveEnabled;
+
     /** for deserialization */
     public GfxdProfile() {
       this.initialized = true;
@@ -1450,7 +1457,7 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
     public final boolean getInitialized() {
       return this.initialized;
     }
-    
+
     public final String getLocale() {
       return this.dbLocaleStr;
     }
@@ -1461,6 +1468,14 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
 
     public final long getUsableHeap() {
       return this.usableHeap;
+    }
+
+    public void setHiveEnabled(boolean hiveEnabled) {
+      this.hiveEnabled = hiveEnabled;
+    }
+
+    public boolean isHiveEnabled() {
+      return hiveEnabled;
     }
 
     @Override
@@ -1549,6 +1564,7 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
       }
       out.writeLong(this.catalogSchemaVersion.get());
       out.writeLong(this.usableHeap);
+      out.writeBoolean(this.hiveEnabled);
     }
 
     @Override
@@ -1589,6 +1605,7 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
       if ((this.flags & F_HAS_USABLE_HEAP) != 0) {
         this.usableHeap = in.readLong();
       }
+      this.hiveEnabled = in.readBoolean();
     }
 
     @Override
