@@ -171,7 +171,7 @@ public class GenericStatement
             Pattern.compile(ROUTED_QUERY_PREFIX + "\\{?\\s*(CALL|EXECUTE)\\s+",
                 Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         private static final Pattern GRANT_REVOKE_INTP_PATTERN =
-            Pattern.compile("^\\s*(GRANT|REVOKE)\\s+(PRIVILEGE)\\s+(INTP|INTERPRET)\\s+",
+            Pattern.compile("^\\s*(GRANT|REVOKE)\\s+(PRIVILEGE)\\s+(EXEC)\\s+(SCALA)\\s+",
                 Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         private static ExecutionEngineArbiter engineArbiter = new ExecutionEngineArbiter();
 // GemStone changes END

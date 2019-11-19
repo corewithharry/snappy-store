@@ -147,8 +147,7 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
   private boolean interpreterExecution() {
     String sql = this.execObject.getSql();
     if (sql != null) {
-      if (sql.startsWith("intp") || sql.startsWith("interpreter")
-              || sql.startsWith("INTP") || sql.startsWith("INTERPRETER")) {
+      if (sql.startsWith("exec") || sql.startsWith("EXEC")) {
         String user = ctx.getUserName() != null ? ctx.getUserName().toLowerCase() : ctx.getUserName();
         InternalDistributedMember member = this.getSenderForReply();
         final Version v = member.getVersionObject();
