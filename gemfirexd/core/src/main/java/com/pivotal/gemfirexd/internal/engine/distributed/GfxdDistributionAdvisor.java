@@ -1625,6 +1625,7 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
       sb.append("; numProcessors=").append(this.numProcessors);
       sb.append("; catalogVersion=").append(this.catalogSchemaVersion.get());
       sb.append("; usableHeap=").append(this.usableHeap);
+      sb.append("; hiveEnabled=").append(this.hiveEnabled);
     }
   }
 

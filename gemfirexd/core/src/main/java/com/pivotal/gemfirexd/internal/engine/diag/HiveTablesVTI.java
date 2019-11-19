@@ -34,12 +34,14 @@ import com.gemstone.gemfire.internal.cache.ExternalTableMetaData;
 import com.gemstone.gemfire.internal.shared.SystemProperties;
 import com.google.common.collect.Iterators;
 import com.pivotal.gemfirexd.internal.catalog.ExternalCatalog;
+import com.pivotal.gemfirexd.internal.engine.ConnectionAwareVTI;
 import com.pivotal.gemfirexd.internal.engine.GfxdVTITemplate;
 import com.pivotal.gemfirexd.internal.engine.GfxdVTITemplateNoAllNodesRoute;
 import com.pivotal.gemfirexd.internal.engine.Misc;
 import com.pivotal.gemfirexd.internal.engine.distributed.utils.GemFireXDUtils;
 import com.pivotal.gemfirexd.internal.engine.jdbc.GemFireXDRuntimeException;
 import com.pivotal.gemfirexd.internal.iapi.sql.ResultColumnDescriptor;
+import com.pivotal.gemfirexd.internal.iapi.sql.conn.LanguageConnectionContext;
 import com.pivotal.gemfirexd.internal.iapi.types.HarmonySerialClob;
 import com.pivotal.gemfirexd.internal.impl.jdbc.EmbedResultSetMetaData;
 import com.pivotal.gemfirexd.internal.impl.jdbc.Util;
@@ -57,7 +59,7 @@ import org.slf4j.LoggerFactory;
  * in a de-normalized form.
  */
 public class HiveTablesVTI extends GfxdVTITemplate
-    implements GfxdVTITemplateNoAllNodesRoute {
+    implements GfxdVTITemplateNoAllNodesRoute, ConnectionAwareVTI {
 
   private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
@@ -65,6 +67,7 @@ public class HiveTablesVTI extends GfxdVTITemplate
   private ExternalTableMetaData currentTableMeta;
   private ListIterator<ExternalTableMetaData.Column> currentTableColumns;
   private ExternalTableMetaData.Column currentTableColumn;
+  private LanguageConnectionContext lcc;
 
   @Override
   public ResultSetMetaData getMetaData() throws SQLException {
@@ -110,7 +113,7 @@ public class HiveTablesVTI extends GfxdVTITemplate
   private Collection<ExternalTableMetaData> getExternalHiveTables() throws InterruptedException {
     if (!Misc.isLead() && GemFireXDUtils.getMyProfile(true).isHiveEnabled()) {
       ArrayList result = (ArrayList)FunctionService.onMembers(Misc.getLeadNode())
-          .withArgs(0).execute(ExternalHiveTablesCollectorFunction.ID)
+          .withArgs(lcc.getConnectionId()).execute(ExternalHiveTablesCollectorFunction.ID)
           .getResult(10, TimeUnit.SECONDS);
       return ((ExternalHiveTablesCollectorResult)(result).get(0)).getTablesMetadata();
     } else {
@@ -256,4 +259,8 @@ public class HiveTablesVTI extends GfxdVTITemplate
 
   private static final ResultSetMetaData metadata = new EmbedResultSetMetaData(
       columnInfo);
+
+  public void setConnectionContext(LanguageConnectionContext lcc) {
+    this.lcc = lcc;
+  }
 }
