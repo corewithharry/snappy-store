@@ -199,7 +199,7 @@ public class StatementFinder {
 				if (trimmedOrignalLC.startsWith(colonCommand) && cmd.equals("run")) {
 					return trimmedOrignalLC.substring(1);
 				}
-				if (colonCommand.startsWith(trimmedOrignalLC)) {
+				if (!trimmedOrignalLC.isEmpty() && colonCommand.startsWith(trimmedOrignalLC)) {
 					return cmd;
 				}
 			}

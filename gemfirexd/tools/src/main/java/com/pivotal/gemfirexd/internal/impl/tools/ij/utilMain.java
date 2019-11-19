@@ -444,6 +444,7 @@ public class utilMain implements java.security.PrivilegedAction {
 						command = StatementFinder.preProcessIntpLine(command);
 					}
 				}
+				if (isInterpreterMode && command != null && command.isEmpty()) continue;
 
 				// if there are no grabbers left,
 				// we are done.
