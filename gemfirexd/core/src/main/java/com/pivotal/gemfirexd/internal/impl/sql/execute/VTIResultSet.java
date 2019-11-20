@@ -897,9 +897,9 @@ public class VTIResultSet extends NoPutResultSetImpl
       q.setQualifiers(this, pushedQualifiers);
     }
 
-		if (userVTI instanceof ConnectionAwareVTI) {
-			((ConnectionAwareVTI)userVTI).setConnectionContext(lcc);
-		}
+    if (userVTI instanceof ConnectionAwareVTI) {
+      ((ConnectionAwareVTI)userVTI).setConnectionContext(lcc);
+    }
   }
   
   @Override
