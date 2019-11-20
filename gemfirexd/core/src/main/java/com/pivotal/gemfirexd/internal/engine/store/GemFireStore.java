@@ -2691,6 +2691,8 @@ public final class GemFireStore implements AccessFactory, ModuleControl,
      */
     private volatile SortedSet<String> serverGroups;
 
+    private boolean hiveSessionInitialized;
+
     private final CancelCriterion stopper = new CancelCriterion() {
 
       @Override
@@ -2776,6 +2778,10 @@ public final class GemFireStore implements AccessFactory, ModuleControl,
           + " GemFireXD not booted or closed down.");
     }
 
+    public void setHiveSessionInitialized(boolean hiveSessionInitialized) {
+      this.hiveSessionInitialized = hiveSessionInitialized;
+    }
+
     /**
      * Get the server groups of this VM.
      */
@@ -2804,6 +2810,7 @@ public final class GemFireStore implements AccessFactory, ModuleControl,
           .isDataDictionaryPersistent());
       profile.setLocale(Misc.getMemStoreBooting().getLocale());
       profile.serialNumber = getSerialNumber();
+      profile.setHiveSessionInitialized(hiveSessionInitialized);
     }
 
     @Override

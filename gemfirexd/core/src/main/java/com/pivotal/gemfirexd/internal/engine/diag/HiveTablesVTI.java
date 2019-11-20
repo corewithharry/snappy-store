@@ -27,6 +27,7 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
+import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.gemstone.gemfire.cache.execute.FunctionService;
@@ -38,7 +39,7 @@ import com.pivotal.gemfirexd.internal.engine.ConnectionAwareVTI;
 import com.pivotal.gemfirexd.internal.engine.GfxdVTITemplate;
 import com.pivotal.gemfirexd.internal.engine.GfxdVTITemplateNoAllNodesRoute;
 import com.pivotal.gemfirexd.internal.engine.Misc;
-import com.pivotal.gemfirexd.internal.engine.distributed.utils.GemFireXDUtils;
+import com.pivotal.gemfirexd.internal.engine.distributed.GfxdDistributionAdvisor;
 import com.pivotal.gemfirexd.internal.engine.jdbc.GemFireXDRuntimeException;
 import com.pivotal.gemfirexd.internal.iapi.sql.ResultColumnDescriptor;
 import com.pivotal.gemfirexd.internal.iapi.sql.conn.LanguageConnectionContext;
@@ -111,7 +112,11 @@ public class HiveTablesVTI extends GfxdVTITemplate
   }
 
   private Collection<ExternalTableMetaData> getExternalHiveTables() throws InterruptedException {
-    if (!Misc.isLead() && GemFireXDUtils.getMyProfile(true).isHiveEnabled()) {
+    GfxdDistributionAdvisor.GfxdProfile primaryLeadProfile = Misc.getPrimaryLeadProfile()
+        .<IllegalArgumentException>orElseThrow(() -> {
+          throw new IllegalStateException("Lead not available");
+        });
+    if (!Misc.isLead() && primaryLeadProfile.isHiveSessionInitialized()) {
       ArrayList result = (ArrayList)FunctionService.onMembers(Misc.getLeadNode())
           .withArgs(lcc.getConnectionId()).execute(ExternalHiveTablesCollectorFunction.ID)
           .getResult(10, TimeUnit.SECONDS);

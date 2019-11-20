@@ -1341,7 +1341,7 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
      * Set to true when hive session is initialized at
      * org.apache.spark.sql.SnappyContext#newHiveSession().
      */
-    private boolean hiveEnabled;
+    private boolean hiveSessionInitialized;
 
     /** for deserialization */
     public GfxdProfile() {
@@ -1470,12 +1470,12 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
       return this.usableHeap;
     }
 
-    public void setHiveEnabled(boolean hiveEnabled) {
-      this.hiveEnabled = hiveEnabled;
+    public void setHiveSessionInitialized(boolean hiveSessionInitialized) {
+      this.hiveSessionInitialized = hiveSessionInitialized;
     }
 
-    public boolean isHiveEnabled() {
-      return hiveEnabled;
+    public boolean isHiveSessionInitialized() {
+      return hiveSessionInitialized;
     }
 
     @Override
@@ -1564,7 +1564,7 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
       }
       out.writeLong(this.catalogSchemaVersion.get());
       out.writeLong(this.usableHeap);
-      out.writeBoolean(this.hiveEnabled);
+      out.writeBoolean(this.hiveSessionInitialized);
     }
 
     @Override
@@ -1605,7 +1605,7 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
       if ((this.flags & F_HAS_USABLE_HEAP) != 0) {
         this.usableHeap = in.readLong();
       }
-      this.hiveEnabled = in.readBoolean();
+      this.hiveSessionInitialized = in.readBoolean();
     }
 
     @Override
@@ -1625,7 +1625,7 @@ public final class GfxdDistributionAdvisor extends DistributionAdvisor {
       sb.append("; numProcessors=").append(this.numProcessors);
       sb.append("; catalogVersion=").append(this.catalogSchemaVersion.get());
       sb.append("; usableHeap=").append(this.usableHeap);
-      sb.append("; hiveEnabled=").append(this.hiveEnabled);
+      sb.append("; hiveSessionInitialized=").append(this.hiveSessionInitialized);
     }
   }
 
