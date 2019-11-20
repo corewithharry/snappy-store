@@ -117,8 +117,9 @@ public class HiveTablesVTI extends GfxdVTITemplate
           throw new IllegalStateException("Lead not available");
         });
     if (!Misc.isLead() && primaryLeadProfile.isHiveSessionInitialized()) {
+      Object[] args = new Object[] { lcc.getConnectionId(), lcc.getCurrentSchemaName() };
       ArrayList result = (ArrayList)FunctionService.onMembers(Misc.getLeadNode())
-          .withArgs(lcc.getConnectionId()).execute(ExternalHiveTablesCollectorFunction.ID)
+          .withArgs(args).execute(ExternalHiveTablesCollectorFunction.ID)
           .getResult(10, TimeUnit.SECONDS);
       return ((ExternalHiveTablesCollectorResult)(result).get(0)).getTablesMetadata();
     } else {

@@ -41,8 +41,11 @@ public class ExternalHiveTablesCollectorFunction implements Function {
 
   @Override
   public void execute(FunctionContext context) {
+    Object[] args = (Object[])context.getArguments();
+    Long connectionId = (Long)args[0];
+    String schema = (String)args[1];
     Collection<ExternalTableMetaData> hiveTablesMetadata =
-        CallbackFactoryProvider.getClusterCallbacks().getHiveTablesMetadata((Long)context.getArguments());
+        CallbackFactoryProvider.getClusterCallbacks().getHiveTablesMetadata(connectionId, schema);
     context.getResultSender().lastResult(new ExternalHiveTablesCollectorResult(hiveTablesMetadata));
   }
 
