@@ -153,7 +153,7 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
         final Version v = member.getVersionObject();
         InterpreterExecute intpexec =
           CallbackFactoryProvider.getClusterCallbacks().getInterpreterExecution(sql, v, ctx.getConnId());
-        String[] results = intpexec.execute(user);
+        String[] results = intpexec.execute(user, this.ctx.getAuthToken());
         SnappyResultHolder srh = new SnappyResultHolder(results);
         this.lastResult(srh);
         return true;

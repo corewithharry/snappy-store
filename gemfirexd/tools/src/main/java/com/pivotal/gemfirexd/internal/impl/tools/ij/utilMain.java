@@ -236,7 +236,7 @@ public class utilMain implements java.security.PrivilegedAction {
 	}
 
 
-	private static String INTERPRETER_PREFIX = "exec scala options() code ";
+	private static String INTERPRETER_PREFIX = "exec scala ";
 	private String getInterpreterPrefixCmdString(String command) {
 	  return INTERPRETER_PREFIX + command;
 	}
