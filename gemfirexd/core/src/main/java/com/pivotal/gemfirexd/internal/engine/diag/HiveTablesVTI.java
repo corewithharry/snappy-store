@@ -57,8 +57,8 @@ import org.slf4j.LoggerFactory;
  * A virtual table that shows the hive tables and their columns
  * in a de-normalized form.
  */
-public class HiveTablesVTI extends GfxdVTITemplate implements
-    GfxdVTITemplateNoAllNodesRoute {
+public class HiveTablesVTI extends GfxdVTITemplate
+    implements GfxdVTITemplateNoAllNodesRoute {
 
   private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
