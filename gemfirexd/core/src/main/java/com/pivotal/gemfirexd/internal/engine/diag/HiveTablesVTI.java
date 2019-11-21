@@ -27,7 +27,6 @@ import java.util.Collections;
 import java.util.Iterator;
 import java.util.List;
 import java.util.ListIterator;
-import java.util.Optional;
 import java.util.concurrent.TimeUnit;
 
 import com.gemstone.gemfire.cache.execute.FunctionService;
@@ -35,7 +34,6 @@ import com.gemstone.gemfire.internal.cache.ExternalTableMetaData;
 import com.gemstone.gemfire.internal.shared.SystemProperties;
 import com.google.common.collect.Iterators;
 import com.pivotal.gemfirexd.internal.catalog.ExternalCatalog;
-import com.pivotal.gemfirexd.internal.engine.ConnectionAwareVTI;
 import com.pivotal.gemfirexd.internal.engine.GfxdVTITemplate;
 import com.pivotal.gemfirexd.internal.engine.GfxdVTITemplateNoAllNodesRoute;
 import com.pivotal.gemfirexd.internal.engine.Misc;
@@ -59,8 +57,7 @@ import org.slf4j.LoggerFactory;
  * A virtual table that shows the hive tables and their columns
  * in a de-normalized form.
  */
-public class HiveTablesVTI extends GfxdVTITemplate
-    implements GfxdVTITemplateNoAllNodesRoute, ConnectionAwareVTI {
+public class HiveTablesVTI extends GfxdVTITemplate implements GfxdVTITemplateNoAllNodesRoute {
 
   private final Logger logger = LoggerFactory.getLogger(getClass().getName());
 
@@ -117,10 +114,9 @@ public class HiveTablesVTI extends GfxdVTITemplate
           throw new IllegalStateException("Lead not available");
         });
     if (!Misc.isLead() && primaryLeadProfile.isHiveSessionInitialized()) {
-      Object[] args = new Object[] { lcc.getConnectionId(), lcc.getCurrentSchemaName() };
       ArrayList result = (ArrayList)FunctionService.onMembers(Misc.getLeadNode())
-          .withArgs(args).execute(ExternalHiveTablesCollectorFunction.ID)
-          .getResult(10, TimeUnit.SECONDS);
+          .execute(ExternalHiveTablesCollectorFunction.ID)
+          .getResult(30, TimeUnit.SECONDS);
       return ((ExternalHiveTablesCollectorResult)(result).get(0)).getTablesMetadata();
     } else {
       return Collections.emptyList();
@@ -265,8 +261,4 @@ public class HiveTablesVTI extends GfxdVTITemplate
 
   private static final ResultSetMetaData metadata = new EmbedResultSetMetaData(
       columnInfo);
-
-  public void setConnectionContext(LanguageConnectionContext lcc) {
-    this.lcc = lcc;
-  }
 }

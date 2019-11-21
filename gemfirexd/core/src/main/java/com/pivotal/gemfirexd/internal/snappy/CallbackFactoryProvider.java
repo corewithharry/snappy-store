@@ -111,7 +111,7 @@ public abstract class CallbackFactoryProvider {
     }
 
     @Override
-    public Collection<ExternalTableMetaData> getHiveTablesMetadata(long connectionId, String schema) {
+    public Collection<ExternalTableMetaData> getHiveTablesMetadata() {
       return null;
     }
   };

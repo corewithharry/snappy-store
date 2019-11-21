@@ -73,10 +73,8 @@ public interface ClusterCallbacks {
 
   /**
    * Used for fetching the metadata of hive tables stored in external hive metastore from lead.
-   * @param connectionId connection id of current connection
-   * @param schema current schema of the connection
    * @return Collection of {@link ExternalTableMetaData} representing necessary information to
    * required by SYS.HIVETABLES VTI.
    */
-  Collection<ExternalTableMetaData> getHiveTablesMetadata(long connectionId, String schema);
+  Collection<ExternalTableMetaData> getHiveTablesMetadata();
 }

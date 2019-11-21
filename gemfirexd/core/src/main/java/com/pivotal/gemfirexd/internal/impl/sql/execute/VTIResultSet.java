@@ -38,30 +38,10 @@
  * LICENSE file.
  */
 
-/*
- * Changes for SnappyData data platform.
- *
- * Portions Copyright (c) 2017-2019 TIBCO Software Inc. All rights reserved.
- *
- * Licensed under the Apache License, Version 2.0 (the "License"); you
- * may not use this file except in compliance with the License. You
- * may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or
- * implied. See the License for the specific language governing
- * permissions and limitations under the License. See accompanying
- * LICENSE file.
- */
-
 package com.pivotal.gemfirexd.internal.impl.sql.execute;
 
 import com.gemstone.gemfire.internal.cache.TXState;
 import com.pivotal.gemfirexd.internal.catalog.TypeDescriptor;
-import com.pivotal.gemfirexd.internal.engine.ConnectionAwareVTI;
 import com.pivotal.gemfirexd.internal.engine.GfxdConstants;
 import com.pivotal.gemfirexd.internal.engine.UpdateVTITemplate;
 import com.pivotal.gemfirexd.internal.engine.distributed.utils.GemFireXDUtils;
@@ -139,7 +119,7 @@ public class VTIResultSet extends NoPutResultSetImpl
 		not application, it will be set to ExecutionContext.UNSPECIFIED_ISOLATION_LEVEL
 	*/
 	private int scanIsolationLevel = ExecutionContext.UNSPECIFIED_ISOLATION_LEVEL;
-	
+
     //
     // class interface
     //
@@ -156,10 +136,10 @@ public class VTIResultSet extends NoPutResultSetImpl
 				 double optimizerEstimatedCost,
 				 boolean isDerbyStyleTableFunction,
                  String returnType
-                 ) 
+                 )
 		throws StandardException
 	{
-		super(activation, resultSetNumber, 
+		super(activation, resultSetNumber,
 			  optimizerEstimatedRowCount, optimizerEstimatedCost);
         this.row = row;
 		this.constructor = constructor;
@@ -183,7 +163,7 @@ public class VTIResultSet extends NoPutResultSetImpl
 								getSavedObject(ctcNumber));
 
 		recordConstructorTime();
-		
+
                 // GemStone changes BEGIN
 		printResultSetHierarchy();
                 // GemStone changes END
@@ -199,7 +179,7 @@ public class VTIResultSet extends NoPutResultSetImpl
 	 *
 	 * @exception StandardException thrown if activation closed.
      */
-	public void	openCore() throws StandardException 
+	public void	openCore() throws StandardException
 	{
 		beginTime = statisticsTimingOn ? XPLAINUtil.nanoTime() : 0;
 		if (SanityManager.DEBUG)
@@ -239,7 +219,7 @@ public class VTIResultSet extends NoPutResultSetImpl
                     UpdatableVTIConstantAction constants = (UpdatableVTIConstantAction) activation.getConstantAction();
                     ((DeferModification) userPS).modificationNotify( constants.statementType, constants.deferred);
                 }
-                
+
 				if ((fastPath != null) && fastPath.executeAsFastPath())
 					;
 				else
@@ -288,10 +268,10 @@ public class VTIResultSet extends NoPutResultSetImpl
 		if ( isDerbyStyleTableFunction )
 		{
 		    int         count = getAllocatedRow().nColumns() + 1;
-            
+
 		    runtimeNullableColumn = new boolean[ count ];
 		    for ( int i = 0; i < count; i++ )   { runtimeNullableColumn[ i ] = true; }
-            
+
 		    return runtimeNullableColumn;
 		}
 
@@ -310,8 +290,8 @@ public class VTIResultSet extends NoPutResultSetImpl
 	/**
 	 * If the VTI is a version2 vti that does not
 	 * need to be instantiated multiple times then
-	 * we simply close the current ResultSet and 
-	 * create a new one via a call to 
+	 * we simply close the current ResultSet and
+	 * create a new one via a call to
 	 * PreparedStatement.executeQuery().
 	 *
 	 * @see NoPutResultSet#openCore
@@ -344,7 +324,7 @@ public class VTIResultSet extends NoPutResultSetImpl
 		else
 		{
 			close(false);
-			openCore();	
+			openCore();
 		}
 	}
 
@@ -354,13 +334,13 @@ public class VTIResultSet extends NoPutResultSetImpl
 	 *
 	 * @exception StandardException thrown on failure.
      */
-	public ExecRow	getNextRowCore() throws StandardException 
+	public ExecRow	getNextRowCore() throws StandardException
 	{
 	    ExecRow result = null;
 
 		beginTime = statisticsTimingOn ? XPLAINUtil.nanoTime() : 0;
-		
-		if ( isOpen ) 
+
+		if ( isOpen )
 		{
 			try
 			{
@@ -411,7 +391,7 @@ public class VTIResultSet extends NoPutResultSetImpl
 	    return result;
 	}
 
-	
+
 
 	/**
      * @see com.pivotal.gemfirexd.internal.iapi.sql.ResultSet#close
@@ -618,7 +598,7 @@ public class VTIResultSet extends NoPutResultSetImpl
 				}
 
 				columns[index].setValueFromResultSet(
-									userVTI, rsColNumber, 
+									userVTI, rsColNumber,
 									/* last parameter is whether or
 									 * not the column is nullable
 									 */
@@ -739,13 +719,13 @@ public class VTIResultSet extends NoPutResultSetImpl
             TypeDescriptor                              td = (TypeDescriptor) fiis.readObject();
 
             return td;
-            
+
         } catch (Throwable t)
         {
             throw StandardException.unexpectedUserException( t );
         }
     }
-    
+
     /**
      * <p>
      * Cast the value coming out of the user-coded ResultSet. The
@@ -774,7 +754,7 @@ public class VTIResultSet extends NoPutResultSetImpl
                     int                                 width;
                     if ( typeID.isNumericTypeId() ) { width = dtd.getPrecision(); }
                     else { width = dtd.getMaximumWidth(); }
-            
+
                     vsdv.setWidth( width, dtd.getScale(), false );
                 }
             }
@@ -796,7 +776,7 @@ public class VTIResultSet extends NoPutResultSetImpl
             dvd.setValue( dvd.getString().substring( 0, TypeId.LONGVARCHAR_MAXWIDTH ) );
         }
     }
-    
+
     /**
      * <p>
      * Truncate long varbinary values to the legal maximum.
@@ -811,11 +791,11 @@ public class VTIResultSet extends NoPutResultSetImpl
             byte[]  result = new byte[ TypeId.LONGVARBIT_MAXWIDTH ];
 
             System.arraycopy( original, 0, result, 0, TypeId.LONGVARBIT_MAXWIDTH );
-            
+
             dvd.setValue( result );
         }
     }
-    
+
     /**
      * <p>
      * Set the correct precision and scale for a decimal value.
@@ -825,7 +805,7 @@ public class VTIResultSet extends NoPutResultSetImpl
         throws StandardException
     {
         VariableSizeDataValue   vsdv = (VariableSizeDataValue) dvd;
-            
+
         vsdv.setWidth( dtd.getPrecision(), dtd.getScale(), false );
     }
 
@@ -883,7 +863,7 @@ public class VTIResultSet extends NoPutResultSetImpl
       ((com.pivotal.gemfirexd.internal.engine.GfxdVTITemplate)userVTI)
           .setSharedState(compileTimeConstants);
     }
-    
+
     if (userVTI instanceof com.pivotal.gemfirexd.internal.vti.Pushable) {
       com.pivotal.gemfirexd.internal.vti.Pushable p = (com.pivotal.gemfirexd.internal.vti.Pushable)userVTI;
       if (referencedColumns != null) {
@@ -895,10 +875,6 @@ public class VTIResultSet extends NoPutResultSetImpl
       com.pivotal.gemfirexd.internal.vti.IQualifyable q = (com.pivotal.gemfirexd.internal.vti.IQualifyable)userVTI;
 
       q.setQualifiers(this, pushedQualifiers);
-    }
-
-    if (userVTI instanceof ConnectionAwareVTI) {
-      ((ConnectionAwareVTI)userVTI).setConnectionContext(lcc);
     }
   }
   
