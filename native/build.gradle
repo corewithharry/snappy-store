@@ -51,11 +51,15 @@ if ((rootProject.name.contains('native') && !rootProject.hasProperty('skipNative
   String opensslVersion = '1.0.2h'
   String unixodbcVersion = '2.3.4'
   String googletestVersion = '1.7.0'
+  String newThriftVersion = '1.0.0-2'
+
   String oldReleasesDir = "https://github.com/SnappyDataInc/thrift/releases/download/${thriftVersion}"
+  
+  String newopensslVersion = '1.1.1'
+
 
   String releasesDir = oldReleasesDir
 
-  String newThriftVersion = '1.0.0-2'
   String newBoostVersion = '1.65.1'
   String newUnixodbcVersion = '2.3.4'
   String newGoogletestVersion = '1.8.0'
@@ -221,17 +225,17 @@ if ((rootProject.name.contains('native') && !rootProject.hasProperty('skipNative
           }
         }
         thrift {
-          headers.srcDir "${distDir}/thrift-${thriftVersion}/include"
+          headers.srcDir "${distDir}/thrift-${newThriftVersion}/include"
           binaries.withType(StaticLibraryBinary) {
             staticLibraryFile = file(getLibPathForPlatform('thrift', 'thrift',
-                  thriftVersion, true, false, targetPlatform))
+                  newThriftVersion, true, false, targetPlatform))
           }
         }
         openssl {
-          headers.srcDir "${distDir}/openssl-${opensslVersion}/include"
+          headers.srcDir "${distDir}/openssl-${newopensslVersion}/include"
           binaries.withType(StaticLibraryBinary) {
             staticLibraryFile = file(getLibPathForPlatform('openssl', 'openssl',
-                  opensslVersion, true, false, targetPlatform))
+                  newopensslVersion, true, false, targetPlatform))
           }
         }
         mpir {
