@@ -70,10 +70,6 @@ public abstract class CallbackFactoryProvider {
       return null;
     }
 
-    @Override
-    public void dumpData(Long connId, String exportUri, String formatType, String tableNames, Boolean ignoreError){
-    }
-
     public void exportData(Long connId, String exportUri, String formatType, String tableNames, Boolean ignoreError){
     }
 
