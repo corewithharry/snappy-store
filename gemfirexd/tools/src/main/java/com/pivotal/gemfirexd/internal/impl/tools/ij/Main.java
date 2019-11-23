@@ -307,7 +307,7 @@ public class Main {
 						// Adding the commands
 						":help", ":reset", ":replay", ":imports", ":implicits",
 						":javap", ":require", ":save", ":silent", ":sh", ":type",
-						":warnings", ":elapsedtime on", ":quit"
+						":warnings", ":elapsedtime on", ":quit", ":run", ":maximumdisplaywidth", ":maximumlinewidth"
 				}));
 			}
 		  // set the default max display width to terminal width

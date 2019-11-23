@@ -202,7 +202,8 @@ public class StatementFinder {
 			String trimmedOrignalLC = origline.trim().toLowerCase();
 			for (String cmd : commandsToStripColonPrefix) {
 				String colonCommand = ":" + cmd;
-				if (trimmedOrignalLC.startsWith(colonCommand) && cmd.equals("run")) {
+				if (trimmedOrignalLC.startsWith(colonCommand) && (cmd.equals("run") ||
+						cmd.equals("maximumlinewidth") || cmd.equals("maximumdisplaywidth"))) {
 					return trimmedOrignalLC.substring(1);
 				}
 				if (!trimmedOrignalLC.isEmpty() && colonCommand.startsWith(trimmedOrignalLC)) {
@@ -216,7 +217,7 @@ public class StatementFinder {
 
 	// User will give as :command but these will be executed locally
 	public final static String[] commandsToStripColonPrefix =
-		new String[] {"elapsedtime on", "quit", "run"};
+		new String[] {"elapsedtime on", "quit", "run", "maximumdisplaywidth", "maximumlinewidth"};
 	/**
 		get the next statement in the input stream. Returns it,
 		dropping its closing semicolon if it has one. If there is
