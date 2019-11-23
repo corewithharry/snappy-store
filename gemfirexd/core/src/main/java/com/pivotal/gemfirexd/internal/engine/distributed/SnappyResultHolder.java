@@ -137,7 +137,8 @@ public final class SnappyResultHolder extends GfxdDataSerializable {
       nullability = new boolean[] { true };
       this.dataTypes = new Object[1];
       dtds = new DataTypeDescriptor[ ] {
-        DataTypeDescriptor.getBuiltInDataTypeDescriptor(Types.VARCHAR, true, 1000) };
+        // Randomly chosen 10000. The lines should not be bigger than this.
+        DataTypeDescriptor.getBuiltInDataTypeDescriptor(Types.VARCHAR, true, 10000) };
       this.colTypes = new int[] { StoredFormatIds.SQL_VARCHAR_ID };
     }
   }
