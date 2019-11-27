@@ -458,7 +458,7 @@ public final class FabricDatabase implements ModuleControl,
           .getTransactionExecute();
 
       if (this.memStore.isSnappyStore()) {
-        this.memStore.setGlobalCmdRgn(createSnappySpecificGlobalCmdRegion(
+        this.memStore.setMetadataCmdRgn(createSnappySpecificMetadataCmdRegion(
             !this.memStore.isDataDictionaryPersistent()));
       }
 
@@ -597,7 +597,7 @@ public final class FabricDatabase implements ModuleControl,
 
   }
 
-  private Region createSnappySpecificGlobalCmdRegion(boolean isLead) throws IOException, ClassNotFoundException {
+  private Region createSnappySpecificMetadataCmdRegion(boolean isLead) throws IOException, ClassNotFoundException {
     GemFireCacheImpl cache = Misc.getGemFireCache();
     final com.gemstone.gemfire.cache.AttributesFactory<?, ?> afact
         = new com.gemstone.gemfire.cache.AttributesFactory<>();
@@ -1196,8 +1196,7 @@ public final class FabricDatabase implements ModuleControl,
           } else {
             final DDLConflatable conflatable = (DDLConflatable) qVal;
             String schemaForTable = conflatable.getSchemaForTableNoThrow();
-            if (!this.memStore.getGemFireCache().isSnappyRecoveryMode() &&
-                this.memStore.restrictedDDLStmtQueue() &&
+            if (!recoveryMode && this.memStore.restrictedDDLStmtQueue() &&
                 !(!disallowMetastoreOnLocator &&
                     schemaForTable != null && Misc.isSnappyHiveMetaTable(schemaForTable))) {
               continue;
@@ -1712,13 +1711,10 @@ public final class FabricDatabase implements ModuleControl,
               logger.info("preparePersistentStatesMsg: adr = " + adr.getFullPath() + " size = " + adr.getRecoveredEntryMap().size());
             }
           }
-          if (logger.infoEnabled()) {
-            logger.info("preparePersistentStatesMsg: adr = " + adr.getFullPath());
-          }
           long mostRecentModifiedTime = 0;
           if (!(adr.getRecoveredEntryMap().size() == 0)) {
             mostRecentModifiedTime =
-                PersistentStateInRecoveryMode.getLatestModifiedTime(adr, logger);
+                PersistentStateInRecoveryMode.getLatestModifiedTime(adr);
           }
           PersistentStateInRecoveryMode.RecoveryModePersistentView dpv
               = new PersistentStateInRecoveryMode.RecoveryModePersistentView(
@@ -1735,6 +1731,9 @@ public final class FabricDatabase implements ModuleControl,
       }
     }
     pmsg.addPRConfigs();
+    if (logger.fineEnabled()) {
+      logger.fine("Setting PersistentStateInRecoveryMode: " + pmsg);
+    }
     this.memStore.setPersistentStateMsg(pmsg);
   }
 
