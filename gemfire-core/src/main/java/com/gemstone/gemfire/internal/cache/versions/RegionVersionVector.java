@@ -798,8 +798,11 @@ public abstract class RegionVersionVector<T extends VersionSource<?>> implements
   }
 
   public Map<T, RegionVersionHolder<T>> getMemToVSnapshotCopy() {
-    Map m = new HashMap();
+    Map<T, RegionVersionHolder<T>> m = new HashMap();
     m.putAll(((CopyOnWriteHashMap)memberToVersionSnapshot).getInnerMap());
+    for (Map.Entry<T, RegionVersionHolder<T>> entry : m.entrySet()) {
+      m.put(entry.getKey(), entry.getValue().clone());
+    }
     return m;
   }
 
@@ -819,16 +822,12 @@ public abstract class RegionVersionVector<T extends VersionSource<?>> implements
       if (holder == null) {
         mbr = getCanonicalId(mbr);
         holder = new RegionVersionHolder<T>(mbr);
-      } else {
-        holder = holder.clone();
       }
-
       holder.recordVersion(version, logger);
 
       // instead of putting the holder save it
       // and do a putAll
       m.put(holder.id, holder);
-
       forPrinting = m;
     }
 

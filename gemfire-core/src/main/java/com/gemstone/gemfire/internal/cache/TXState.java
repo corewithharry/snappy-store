@@ -1154,17 +1154,20 @@ public final class TXState implements TXStateInterface {
               logger.info(LocalizedStrings.DEBUG, "Recording version " + vi + " from snapshot to " +
                       "region.");
             }
-            Map versionV = s.get(vi.region);
-            if (versionV == null) {
-              versionV = ((LocalRegion)vi.region).getVersionVector().getMemToVSnapshotCopy();
-              s.put((LocalRegion) vi.region, versionV);
-            }
-            ((LocalRegion)vi.region).getVersionVector().
-                    recordVersionForSnapshotWithoutPublish((VersionSource)vi.member, vi.version, versionV);
-          }
 
-          for( Map.Entry<LocalRegion, Map<VersionSource, VersionHolder>> entry: s.entrySet()) {
-            entry.getKey().getVersionVector().recordAllVersion(entry.getValue());
+            if (vi.region.isSnapshotEnabledRegion()) {
+              Map versionV = s.get(vi.region);
+              if (versionV == null) {
+                versionV = ((LocalRegion) vi.region).getVersionVector().getMemToVSnapshotCopy();
+                s.put((LocalRegion) vi.region, versionV);
+              }
+              ((LocalRegion) vi.region).getVersionVector().
+                      recordVersionForSnapshotWithoutPublish((VersionSource) vi.member, vi.version, versionV);
+            }
+
+            for (Map.Entry<LocalRegion, Map<VersionSource, VersionHolder>> entry : s.entrySet()) {
+              entry.getKey().getVersionVector().recordAllVersion(entry.getValue());
+            }
           }
         } finally {
           cache.releaseWriteLockOnSnapshotRvv();
@@ -4277,7 +4280,7 @@ public final class TXState implements TXStateInterface {
   }
 
   @Override
-  public void recordVersionForSnapshot(Object member, long version, Region region) {
+  public void recordVersionForSnapshot(Object member, long version, LocalRegion region) {
     queue.add(new VersionInformation(member, version, region));
 
     Boolean wasPresent = writeRegions.putIfAbsent(region, true);
@@ -4287,14 +4290,13 @@ public final class TXState implements TXStateInterface {
         br.takeSnapshotGIIReadLock();
       }
     }
-
   }
 
   class VersionInformation {
     Object member;
     long version;
-    Region region;
-    public VersionInformation(Object member, long version, Region reg){
+    LocalRegion region;
+    public VersionInformation(Object member, long version, LocalRegion reg){
       this.member = member;
       this.version = version;
       this.region = reg;

@@ -4935,4 +4935,9 @@ public class DistributedRegion extends LocalRegion implements
       return 0;
     }
   }
+
+  // By default snapshot is disabled on replicated table.
+  public boolean isSnapshotEnabledRegion() {
+    return getCache().snapshotEnabledForTest();
+  }
 }
