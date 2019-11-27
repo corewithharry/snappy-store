@@ -1142,11 +1142,7 @@ public final class TXState implements TXStateInterface {
       if (isSnapshot() || cache.snapshotEnabledForTest()) {
         // first take a lock at cache level so that we don't go into deadlock or sort array before
         // This is for tx RC, for snapshot just record all the versions from the queue
-        //TODO: this is performance issue: Need to make the lock granular at region level.
-        // also write a different recordVersion which will record without making clone
-
         cache.acquireWriteLockOnSnapshotRvv();
-
         try {
           Map<LocalRegion, Map<VersionSource, VersionHolder>> s = new HashMap();
           for (VersionInformation vi : queue) {
@@ -1158,16 +1154,15 @@ public final class TXState implements TXStateInterface {
             if (vi.region.isSnapshotEnabledRegion()) {
               Map versionV = s.get(vi.region);
               if (versionV == null) {
-                versionV = ((LocalRegion) vi.region).getVersionVector().getMemToVSnapshotCopy();
-                s.put((LocalRegion) vi.region, versionV);
+                versionV = vi.region.getVersionVector().getMemToVSnapshotCopy();
+                s.put(vi.region, versionV);
               }
-              ((LocalRegion) vi.region).getVersionVector().
+              vi.region.getVersionVector().
                       recordVersionForSnapshotWithoutPublish((VersionSource) vi.member, vi.version, versionV);
             }
-
-            for (Map.Entry<LocalRegion, Map<VersionSource, VersionHolder>> entry : s.entrySet()) {
-              entry.getKey().getVersionVector().recordAllVersion(entry.getValue());
-            }
+          }
+          for (Map.Entry<LocalRegion, Map<VersionSource, VersionHolder>> entry : s.entrySet()) {
+            entry.getKey().getVersionVector().recordAllVersion(entry.getValue());
           }
         } finally {
           cache.releaseWriteLockOnSnapshotRvv();
