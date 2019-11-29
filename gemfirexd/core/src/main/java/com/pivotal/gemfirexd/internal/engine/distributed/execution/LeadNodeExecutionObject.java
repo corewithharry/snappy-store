@@ -7,7 +7,8 @@ import com.pivotal.gemfirexd.internal.snappy.LeadNodeExecutionContext;
 import com.pivotal.gemfirexd.internal.snappy.SparkSQLExecute;
 
 public abstract class LeadNodeExecutionObject implements GfxdSerializable {
-  public abstract SparkSQLExecute getSparkSQlExecute(Version v, LeadNodeExecutionContext ctx) throws Exception;
+  public abstract SparkSQLExecute getSparkSQlExecute(Version v,
+    LeadNodeExecutionContext ctx, Object dfObject) throws Exception;
   public abstract boolean isUpdateOrDeleteOrPut();
   public abstract void reset();
 
@@ -19,4 +20,5 @@ public abstract class LeadNodeExecutionObject implements GfxdSerializable {
     return null;
   }
   public abstract String getExceptionString();
+  public String getSql() { return null; }
 }
