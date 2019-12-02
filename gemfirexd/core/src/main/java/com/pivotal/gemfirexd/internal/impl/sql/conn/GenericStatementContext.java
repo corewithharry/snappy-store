@@ -784,11 +784,13 @@ public final class GenericStatementContext
 
 		StringBuilder sb = ((ContextImpl) lcc).appendErrorInfo();
 		if (sb != null) {
-
-			sb.append("Failed Statement is: ");
-
-			sb.append(getStatementText());
-
+			String stmtText = getStatementText();
+			if (!stmtText.contains("SET @@session.sql_mode=ANSI_QUOTES") &&
+					!stmtText.contains("SELECT version FROM v$instance") &&
+					!stmtText.contains("SELECT @@version")) {
+				sb.append("Failed Statement is: ");
+				sb.append(stmtText);
+			}
 			if ((pvs != null) && pvs.getParameterCount() > 0)
 			{
 				String pvsString = " with " + pvs.getParameterCount() +
