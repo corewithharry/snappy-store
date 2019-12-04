@@ -49,9 +49,6 @@ public class RecoveryModeResultCollector extends ArrayList<Object> implements
   }
 
   public ArrayList<Object> getResult() throws FunctionException {
-    if (GemFireXDUtils.TraceRecoveryMode) {
-      throw new AssertionError("unexpected Throwable ");
-    }
     return this;
   }
 
@@ -133,7 +130,8 @@ public class RecoveryModeResultCollector extends ArrayList<Object> implements
                     .getAllRegionView());
             break;
 
-          default: SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_RECOVERY_MODE, "Should not have come here.");
+          default: SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_RECOVERY_MODE,
+              "Found illegal object " + obj);
         }
       }
       if (metadata == null) throw new AssertionError("RecoveryModeResultCollector could not properly" +
@@ -169,8 +167,7 @@ public class RecoveryModeResultCollector extends ArrayList<Object> implements
             (Throwable)resultOfSingleExecution);
       }
     }
-
-    if (resultOfSingleExecution != null) {
+    assert (resultOfSingleExecution != null);
       ArrayList<Object> list = memberNPartsMap.get(memberID);
       if (list != null) {
         list.add(resultOfSingleExecution);
@@ -179,6 +176,5 @@ public class RecoveryModeResultCollector extends ArrayList<Object> implements
         list.add(resultOfSingleExecution);
         memberNPartsMap.put(memberID, list);
       }
-    }
   }
 }

@@ -54,24 +54,31 @@ public abstract class CallbackFactoryProvider {
     }
 
     @Override
-    public SparkSQLExecute getSQLExecute(String sql, String schema,
+    public SparkSQLExecute getSQLExecute(Object dfObj, String sql, String schema,
         LeadNodeExecutionContext ctx, Version v, boolean isPreparedStatement,
         boolean isPreparedPhase, ParameterValueSet pvs) {
        return null;
     }
 
     @Override
+    public InterpreterExecute getInterpreterExecution(String sql, Version v, Long connId) {
+        return null;
+    }
+
     public SparkSQLExecute getSampleInsertExecute(String baseTable,  LeadNodeExecutionContext ctx,
-      Version v, List<DataValueDescriptor[]> dvdRows, byte[] serializedDVDs) {
+        Version v, List<DataValueDescriptor[]> dvdRows, byte[] serializedDVDs) {
       return null;
     }
 
-    @Override
-    public void dumpData(Long connId, String exportUri, String formatType, String tableNames, Boolean ignoreError){
+    public void exportData(Long connId, String exportUri, String formatType, String tableNames, Boolean ignoreError){
     }
 
     @Override
-    public void dumpDDLs(Long connId, String exportUri) {
+    public void exportDDLs(Long connId, String exportUri) {
+    }
+
+    @Override
+    public void generateLoadScripts(Long connId) {
     }
 
     @Override
