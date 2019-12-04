@@ -65,10 +65,10 @@ ControlConnection::ControlConnection(ClientService * const &service) :
     m_serverGroups(service->getServerGrps()) {
   m_locators = service->getLocators();
   m_framedTransport = service->isFrameTransport();
-  m_snappyServerType = service->getServerType(true, false, false);
+  m_snappyServerType = service->getServerType(true, false, true);
   m_controlHost = service->getCurrentHostAddress();
   boost::assign::insert(m_snappyServerTypeSet)(
-      service->getServerType(true, false, false));
+      service->getServerType(true, false, true));
   std::copy(m_locators.begin(), m_locators.end(),
       std::inserter(m_controlHostSet, m_controlHostSet.end()));
   m_controlLocator = nullptr;

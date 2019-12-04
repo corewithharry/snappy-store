@@ -667,7 +667,11 @@ protocol::TProtocol* ClientService::createProtocol(
   boost::shared_ptr<TSocket> socket;
   if (useSSL) {
     TSSLSocketFactory sslSocketFactory;
-    sslSocketFactory.authenticate(false);
+//    sslSocketFactory.ciphers("TLS_RSA_WITH_AES_128_CBC_SHA:TLS_RSA_WITH_AES_256_CBC_SHA:TLS_RSA_WITH_AES_128_CBC_SHA256:TLS_RSA_WITH_AES_256_CBC_SHA256");
+    sslSocketFactory.loadTrustedCertificates("/home/pbisen/SSLTest/self-signed-cert/cacerts.pem");
+//    sslSocketFactory.loadPrivateKey("/home/pbisen/SSLTest/trustStore.key");
+//    sslSocketFactory.loadCertificate("/usr/local/share/ca-certificates/myapp-cer.pem");
+    sslSocketFactory.authenticate(true);
     socket = sslSocketFactory.createSocket(hostAddr.hostName, hostAddr.port);
   } else {
     socket.reset(new TSocket(hostAddr.hostName, hostAddr.port));
