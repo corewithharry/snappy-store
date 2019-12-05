@@ -476,38 +476,20 @@ public class ContextManager
 // GemStone changes END
 		boolean reportError = reportError(error);
 
-		if (reportError) 
-		{
+		if (reportError) {
 			ContextImpl lcc = null;
+			ContextImpl sc = null;
 			StringBuilder sb = null;
-			if (! shutdown)
-			{
+			if (!shutdown) {
 				// report an id for the message if possible
-				lcc = (ContextImpl) getContext(com.pivotal.gemfirexd.internal.iapi.reference.ContextId.LANG_CONNECTION);
-				if (lcc != null) {
-					sb = lcc.appendErrorInfo();
-				}
-			}
+//				lcc = (ContextImpl)getContext(com.pivotal.gemfirexd.internal.iapi.reference.ContextId.LANG_CONNECTION);
+//				if (lcc != null) {
+//					sb = lcc.appendErrorInfo();
+//				}
 
-// GemStone changes BEGIN
-			/* (original code) -- no useful information
-			String cleanup = "Cleanup action starting";
-
-			if (sb != null) {
-				sb.append(cleanup);
-				cleanup = sb.toString();
-			}
-
-			errorStringBuilder.appendln(cleanup);
-			*/
-// GemStone changes END
-			
-			if (!shutdown)		// Do this only during normal processing.
-			{	
-				ContextImpl sc = (ContextImpl) getContext(com.pivotal.gemfirexd.internal.iapi.reference.ContextId.LANG_STATEMENT);
+				sc = (ContextImpl)getContext(com.pivotal.gemfirexd.internal.iapi.reference.ContextId.LANG_STATEMENT);
 				// Output the SQL statement that failed in the log file.
-				if (sc != null)
-				{					
+				if (sc != null) {
 					sb = sc.appendErrorInfo();
 					if (sb != null)
 						errorStringBuilder.appendln(sb.toString());
@@ -528,21 +510,20 @@ forever: for (;;) {
 			int errorSeverity = error instanceof StandardException ?
 				((StandardException) error).getSeverity() :
 				ExceptionSeverity.NO_APPLICABLE_SEVERITY;
- 			if (reportError) {
+	if (reportError) {
 // GemStone changes BEGIN
-			  if (printStackTrace(error)) {
-			    errorStringBuilder.stackTrace(error);
-			  }
-			  else {
-			    // just add exception state and message
-			    errorStringBuilder.appendln(error.toString());
-			  }
+		if (printStackTrace(error)) {
+				errorStringBuilder.stackTrace(error);
+		} else {
+			// just add exception state and message
+				errorStringBuilder.appendln(error.toString());
+		}
 			  /* (original code)
 				errorStringBuilder.stackTrace(error);
 			  */
 // GemStone changes END
-				flushErrorString();
-			}
+		flushErrorString();
+	}
 
 			
 			boolean	lastHandler = false;
@@ -716,7 +697,14 @@ cleanup:	for (int index = holder.size() - 1; index >= 0; index--) {
 	 */
 	private void flushErrorString()
 	{
-		errorStream.print(errorStringBuilder.get().toString());
+		//changes to fix SNAP-3176
+		String stmtText = errorStringBuilder.get().toString();
+		if (!stmtText.contains("SET @@session.sql_mode=ANSI_QUOTES") &&
+				!stmtText.contains("SELECT version FROM v$instance") &&
+				!stmtText.contains("SELECT @@version")) {
+			errorStream.print(stmtText);
+		}
+//		errorStream.print(errorStringBuilder.get().toString());
 		errorStream.flush();
 		errorStringBuilder.reset();
 	}
