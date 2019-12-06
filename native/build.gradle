@@ -48,16 +48,13 @@ if ((rootProject.name.contains('native') && !rootProject.hasProperty('skipNative
   String thriftVersion = '1.0.0-1'
   String boostVersion = '1.59.0'
   String mpirVersion = '2.7.2'
-  String opensslVersion = '1.0.2h'
+  String opensslVersion = '1.1.1'
   String unixodbcVersion = '2.3.4'
   String googletestVersion = '1.7.0'
   String newThriftVersion = '1.0.0-2'
-
+  thriftVersion = newThriftVersion
   String oldReleasesDir = "https://github.com/SnappyDataInc/thrift/releases/download/${thriftVersion}"
   
-  String newopensslVersion = '1.1.1'
-
-
   String releasesDir = oldReleasesDir
 
   String newBoostVersion = '1.65.1'
@@ -87,31 +84,29 @@ if ((rootProject.name.contains('native') && !rootProject.hasProperty('skipNative
     }
     if (flavour.startsWith('ubuntu14') || flavour.startsWith('linuxmint17') ||
         flavour.startsWith('elementary0.3')) {
-      dependencies += [ "thrift-${thriftVersion}-ubuntu14.04.tar.bz2",
+      dependencies += [ "thrift-${newThriftVersion}-ubuntu14.04.tar.bz2",
                         "boost-${boostVersion}-ubuntu14.04.tar.bz2",
                         "unixODBC-${unixodbcVersion}-ubuntu14.04.tar.bz2",
                         "googletest-${googletestVersion}-ubuntu14.04.tar.bz2" ]
     } else if (flavour.startsWith('ubuntu16') || flavour.startsWith('ubuntu17') || flavour.startsWith('ubuntu18') ||
         flavour.startsWith('linuxmint18') || flavour.startsWith('linuxmint19') ||
         flavour.startsWith('elementary0.4') || flavour.startsWith('elementary5')) {
-      thriftVersion = newThriftVersion
       boostVersion = newBoostVersion
       unixodbcVersion = newUnixodbcVersion
       googletestVersion = newGoogletestVersion
       releasesDir = newReleasesDir
-      dependencies += [ "thrift-${thriftVersion}-ubuntu16.04.tar.bz2",
+      dependencies += [ "thrift-${newThriftVersion}-ubuntu16.04.tar.bz2",
                         "boost-${boostVersion}-ubuntu16.04.tar.bz2",
                         "unixODBC-${unixodbcVersion}-ubuntu16.04.tar.bz2",
                         "googletest-${googletestVersion}-ubuntu16.04.tar.bz2" ]
     } else if (flavour.startsWith('redhat6') || flavour.startsWith('redhat7') ||
         flavour.startsWith('fedora') ||
         flavour.startsWith('centos6') || flavour.startsWith('centos7')) {
-      thriftVersion = newThriftVersion
       boostVersion = newBoostVersion
       unixodbcVersion = newUnixodbcVersion
       googletestVersion = newGoogletestVersion
       releasesDir = newReleasesDir
-      dependencies += [ "thrift-${thriftVersion}-rhel6.tar.bz2",
+      dependencies += [ "thrift-${newThriftVersion}-rhel6.tar.bz2",
                         "boost-${boostVersion}-rhel6.tar.bz2",
                         "unixODBC-${unixodbcVersion}-rhel6.tar.bz2",
                         "googletest-${googletestVersion}-rhel6.tar.bz2" ]
@@ -119,7 +114,7 @@ if ((rootProject.name.contains('native') && !rootProject.hasProperty('skipNative
       throw new GradleException("Unhandled linux flavour ${flavour}. Use -PlinuxFlavour to force one")
     }
   } else {
-    dependencies += [ "thrift-${thriftVersion}-${osName}.tar.bz2",
+    dependencies += [ "thrift-${newThriftVersion}-${osName}.tar.bz2",
                       "boost-${boostVersion}-${osName}.tar.bz2",
                       "googletest-${googletestVersion}-${osName}.tar.bz2" ]
   }
@@ -232,10 +227,10 @@ if ((rootProject.name.contains('native') && !rootProject.hasProperty('skipNative
           }
         }
         openssl {
-          headers.srcDir "${distDir}/openssl-${newopensslVersion}/include"
+          headers.srcDir "${distDir}/openssl-${opensslVersion}/include"
           binaries.withType(StaticLibraryBinary) {
             staticLibraryFile = file(getLibPathForPlatform('openssl', 'openssl',
-                  newopensslVersion, true, false, targetPlatform))
+                  opensslVersion, true, false, targetPlatform))
           }
         }
         mpir {
