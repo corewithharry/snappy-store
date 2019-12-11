@@ -70,6 +70,8 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
 
   private static final Pattern PARSE_EXCEPTION = Pattern.compile(
       "(Pars[a-zA-Z]*Exception)|(Pars[a-zA-Z]*Error)");
+  private static final Pattern EXEC_COMMAND = Pattern.compile(
+          "\\s*EXEC\\s+SCALA\\s+.*", Pattern.CASE_INSENSITIVE);
 
   public LeadNodeExecutorMsg(LeadNodeExecutionContext ctx,
       GfxdResultCollector<Object> rc, LeadNodeExecutionObject execObject) {
@@ -147,7 +149,7 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
   private boolean interpreterExecution() throws Exception {
     String sql = this.execObject.getSql();
     if (sql != null) {
-      if (sql.startsWith("exec") || sql.startsWith("EXEC")) {
+      if (EXEC_COMMAND.matcher(sql).matches()) {
         String user = ctx.getUserName() != null ? ctx.getUserName().toLowerCase() : ctx.getUserName();
         InternalDistributedMember member = this.getSenderForReply();
         final Version v = member.getVersionObject();
