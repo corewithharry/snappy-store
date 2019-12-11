@@ -124,7 +124,7 @@ public class GetLeadNodeInfoMsg extends MemberExecutorMessage<Object> {
     }
   }
 
-  private byte[] getClassBytes() throws FileNotFoundException, IOException {
+  private byte[] getClassBytes() throws IOException {
     String filePath = (String)this.additionalArgs[0];
     Path p = Paths.get(filePath);
     if (!Files.exists(p)) {
