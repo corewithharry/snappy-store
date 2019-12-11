@@ -42,9 +42,11 @@ public class GetLeadNodeInfoMsg extends MemberExecutorMessage<Object> {
   private DataReqType requestType;
   private Long connID;
 
-  public enum DataReqType {GET_JARS, EXPORT_DATA, EXPORT_DDLS, GENERATE_LOAD_SCRIPTS, GET_CLASS_BYTES}
 
-  public GetLeadNodeInfoMsg(final ResultCollector<Object, Object> rc, DataReqType reqType, Long connID, Object... args) {
+  public enum DataReqType {GET_JARS, EXPORT_DATA, EXPORT_DDLS, GET_CLASS_BYTES}
+
+  public GetLeadNodeInfoMsg(final ResultCollector<Object, Object> rc,
+      DataReqType reqType, Long connID, Object... args) {
     super(rc, null, false, true);
     this.requestType = reqType;
     this.additionalArgs = args;
@@ -108,13 +110,6 @@ public class GetLeadNodeInfoMsg extends MemberExecutorMessage<Object> {
           }
           result = exportDDLs();
           break;
-        case GENERATE_LOAD_SCRIPTS:
-          if (GemFireXDUtils.TraceQuery) {
-            SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_QUERYDISTRIB,
-                "GetLeadNodeInfoMsg - case GENERATE_LOAD_SCRIPTS");
-          }
-          result = generateLoadScripts();
-          break;
         case GET_CLASS_BYTES:
           result = getClassBytes();
           break;
@@ -143,19 +138,17 @@ public class GetLeadNodeInfoMsg extends MemberExecutorMessage<Object> {
   }
 
   private String exportData() {
-    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks().exportData(connID,
-        additionalArgs[0].toString(), additionalArgs[1].toString(), additionalArgs[2].toString(), Boolean.parseBoolean(additionalArgs[3].toString()));
+    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider
+        .getClusterCallbacks().exportData(connID, additionalArgs[0].toString(),
+        additionalArgs[1].toString(), additionalArgs[2].toString(),
+        Boolean.parseBoolean(additionalArgs[3].toString()));
     return "Data recovered";
   }
 
   private String exportDDLs() {
-    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks().exportDDLs(connID, additionalArgs[0].toString());
+    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider
+        .getClusterCallbacks().exportDDLs(connID, additionalArgs[0].toString());
     return "DDLs recovered.";
-  }
-
-  private String generateLoadScripts() {
-    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks().generateLoadScripts(connID);
-    return "load scripts generated";
   }
 
   private String handleGetJarsRequest() {
