@@ -69,7 +69,7 @@ import com.pivotal.gemfirexd.internal.engine.distributed.GfxdListResultCollector
 import com.pivotal.gemfirexd.internal.engine.distributed.GfxdMessage;
 import com.pivotal.gemfirexd.internal.engine.distributed.QueryCancelFunction;
 import com.pivotal.gemfirexd.internal.engine.distributed.QueryCancelFunction.QueryCancelFunctionArgs;
-import com.pivotal.gemfirexd.internal.engine.distributed.message.GetLeadNodeInfoAsStringMessage;
+import com.pivotal.gemfirexd.internal.engine.distributed.message.GetLeadNodeInfoMsg;
 import com.pivotal.gemfirexd.internal.engine.distributed.utils.GemFireXDUtils;
 import com.pivotal.gemfirexd.internal.engine.distributed.utils.SecurityUtils;
 import com.pivotal.gemfirexd.internal.engine.jdbc.GemFireXDRuntimeException;
@@ -1539,8 +1539,8 @@ public class GfxdSystemProcedures extends SystemProcedures {
       }
       GfxdListResultCollector collector = new GfxdListResultCollector();
       // ConnectionId is not being used for GET_DEPLOYED_JARS; hence passing dummy value(0L)
-      GetLeadNodeInfoAsStringMessage msg = new GetLeadNodeInfoAsStringMessage(
-          collector, GetLeadNodeInfoAsStringMessage.DataReqType.GET_JARS, 0L, (Object[])null);
+      GetLeadNodeInfoMsg msg = new GetLeadNodeInfoMsg(
+          collector, GetLeadNodeInfoMsg.DataReqType.GET_JARS, 0L, (Object[])null);
       msg.executeFunction();
       ArrayList<Object> result = collector.getResult();
       String resJarStrings = (String)result.get(0);
@@ -1570,8 +1570,8 @@ public class GfxdSystemProcedures extends SystemProcedures {
       }
       Long connectionId = Misc.getLanguageConnectionContext().getConnectionId();
       GfxdListResultCollector collector = new GfxdListResultCollector();
-      GetLeadNodeInfoAsStringMessage msg = new GetLeadNodeInfoAsStringMessage(
-          collector, GetLeadNodeInfoAsStringMessage.DataReqType.EXPORT_DATA, connectionId,
+      GetLeadNodeInfoMsg msg = new GetLeadNodeInfoMsg(
+          collector, GetLeadNodeInfoMsg.DataReqType.EXPORT_DATA, connectionId,
           exportUri, formatType, tableNames, ignoreError);
 
       msg.executeFunction();
@@ -1598,8 +1598,8 @@ public class GfxdSystemProcedures extends SystemProcedures {
       }
       Long connectionId = Misc.getLanguageConnectionContext().getConnectionId();
       GfxdListResultCollector collector = new GfxdListResultCollector();
-      GetLeadNodeInfoAsStringMessage msg = new GetLeadNodeInfoAsStringMessage(
-          collector, GetLeadNodeInfoAsStringMessage.DataReqType.EXPORT_DDLS, connectionId, exportUri);
+      GetLeadNodeInfoMsg msg = new GetLeadNodeInfoMsg(
+          collector, GetLeadNodeInfoMsg.DataReqType.EXPORT_DDLS, connectionId, exportUri);
       msg.executeFunction();
       if (GemFireXDUtils.TraceSysProcedures) {
         SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_SYS_PROCEDURES,
@@ -1618,8 +1618,8 @@ public class GfxdSystemProcedures extends SystemProcedures {
       }
       Long connectionId = Misc.getLanguageConnectionContext().getConnectionId();
       GfxdListResultCollector collector = new GfxdListResultCollector();
-      GetLeadNodeInfoAsStringMessage msg = new GetLeadNodeInfoAsStringMessage(
-          collector, GetLeadNodeInfoAsStringMessage.DataReqType.GENERATE_LOAD_SCRIPTS, connectionId);
+      GetLeadNodeInfoMsg msg = new GetLeadNodeInfoMsg(
+          collector, GetLeadNodeInfoMsg.DataReqType.GENERATE_LOAD_SCRIPTS, connectionId);
       msg.executeFunction();
       if (GemFireXDUtils.TraceSysProcedures) {
         SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_SYS_PROCEDURES,
