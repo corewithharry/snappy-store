@@ -71,7 +71,7 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
   private static final Pattern PARSE_EXCEPTION = Pattern.compile(
       "(Pars[a-zA-Z]*Exception)|(Pars[a-zA-Z]*Error)");
   private static final Pattern EXEC_COMMAND = Pattern.compile(
-          "\\s*EXEC\\s+SCALA\\s+.*", Pattern.CASE_INSENSITIVE);
+          "\\s*EXEC\\s+SCALA\\s+.*", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   public LeadNodeExecutorMsg(LeadNodeExecutionContext ctx,
       GfxdResultCollector<Object> rc, LeadNodeExecutionObject execObject) {

@@ -493,7 +493,7 @@ public class utilMain implements java.security.PrivilegedAction {
 					  JDBCDisplayUtil.INITIAL_CMD_IN_PROGRESS = false;
 					  GfxdUtilLauncher.initialRunFiles = null;
 					}
-						if (this.isInterpreterMode && !JDBCDisplayUtil.BEFORE_CONNECT) {
+						if (!this.isInterpreterMode || (this.isInterpreterMode && !JDBCDisplayUtil.BEFORE_CONNECT)) {
 							endTime = displayResult(out, result, connEnv[currCE].getConnection(),
 									beginTime /* GemStoneAddition */, true);
 						}
