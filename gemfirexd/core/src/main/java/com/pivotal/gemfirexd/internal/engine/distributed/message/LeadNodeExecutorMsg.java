@@ -70,6 +70,8 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
 
   private static final Pattern PARSE_EXCEPTION = Pattern.compile(
       "(Pars[a-zA-Z]*Exception)|(Pars[a-zA-Z]*Error)");
+  private static final Pattern EXEC_COMMAND = Pattern.compile(
+          "\\s*EXEC\\s+SCALA\\s+.*", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
 
   public LeadNodeExecutorMsg(LeadNodeExecutionContext ctx,
       GfxdResultCollector<Object> rc, LeadNodeExecutionObject execObject) {
@@ -123,7 +125,7 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
       }
       InternalDistributedMember m = this.getSenderForReply();
       final Version v = m.getVersionObject();
-      exec = this.execObject.getSparkSQlExecute(v, ctx);
+      exec = this.execObject.getSparkSQlExecute(v, ctx, null);
       SnappyResultHolder srh = new SnappyResultHolder(exec,
         execObject.isUpdateOrDeleteOrPut());
 
@@ -144,18 +146,27 @@ public final class LeadNodeExecutorMsg extends MemberExecutorMessage<Object> {
     }
   }
 
-  private boolean interpreterExecution() {
+  private boolean interpreterExecution() throws Exception {
     String sql = this.execObject.getSql();
     if (sql != null) {
-      if (sql.startsWith("exec") || sql.startsWith("EXEC")) {
+      if (EXEC_COMMAND.matcher(sql).matches()) {
         String user = ctx.getUserName() != null ? ctx.getUserName().toLowerCase() : ctx.getUserName();
         InternalDistributedMember member = this.getSenderForReply();
         final Version v = member.getVersionObject();
         InterpreterExecute intpexec =
           CallbackFactoryProvider.getClusterCallbacks().getInterpreterExecution(sql, v, ctx.getConnId());
-        String[] results = intpexec.execute(user, this.ctx.getAuthToken());
-        SnappyResultHolder srh = new SnappyResultHolder(results);
-        this.lastResult(srh);
+        Object results = intpexec.execute(user, this.ctx.getAuthToken());
+        if (results instanceof String[]) {
+          SnappyResultHolder srh = new SnappyResultHolder((String[])results);
+          this.lastResult(srh);
+        } else {
+          // result itself is dataframe
+          exec = this.execObject.getSparkSQlExecute(v, ctx, results);
+          SnappyResultHolder srh = new SnappyResultHolder(exec, false);
+          srh.prepareSend(this, execObject);
+          this.lastResultSent = true;
+          this.endMessage();
+        }
         return true;
       }
     }
