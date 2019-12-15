@@ -65,10 +65,10 @@ ControlConnection::ControlConnection(ClientService * const &service) :
     m_serverGroups(service->getServerGrps()) {
   m_locators = service->getLocators();
   m_framedTransport = service->isFrameTransport();
-  m_snappyServerType = service->getServerType(true, false, true);
+  m_snappyServerType = service->getServerType();
   m_controlHost = service->getCurrentHostAddress();
   boost::assign::insert(m_snappyServerTypeSet)(
-      service->getServerType(true, false, true));
+      service->getServerType());
   std::copy(m_locators.begin(), m_locators.end(),
       std::inserter(m_controlHostSet, m_controlHostSet.end()));
   m_controlLocator = nullptr;
@@ -301,7 +301,7 @@ void ControlConnection::failoverToAvailableHost(
             || m_snappyServerType
                 == thrift::ServerType::THRIFT_SNAPPY_CP_SSL) {
           TSSLSocketFactory sslSocketFactory;
-          std::string sslProperty = "truststore";
+          std::string sslProperty = ClientService::getSSLPropertyName(SSLProperty::TRUSTSTORE);
           std::string trustStoreCert;
           ClientService::getSSLPropertyValue(sslProperty, trustStoreCert);
           sslSocketFactory.loadTrustedCertificates(trustStoreCert.c_str());

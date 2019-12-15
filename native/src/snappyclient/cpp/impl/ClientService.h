@@ -94,7 +94,7 @@ namespace io {
           const thrift::OpenConnectionArgs m_connArgs;
           bool m_loadBalance;
           bool m_loadBalanceInitialized;
-          thrift::ServerType::type m_reqdServerType;
+          static thrift::ServerType::type m_reqdServerType;
           bool m_useFramedTransport;
           std::set<std::string> m_serverGroups;
 
@@ -238,6 +238,8 @@ namespace io {
 
           static thrift::ServerType::type getServerType(bool isServer,
               bool useBinaryProtocol, bool useSSL);
+
+          static thrift::ServerType::type getServerType(){ return m_reqdServerType;}
 
           inline bool isOpen() const noexcept {
             return m_isOpen;
@@ -399,6 +401,7 @@ namespace io {
             return m_useFramedTransport;
           }
           static void getSSLPropertyValue(std::string& propertyName, std::string& value);
+          static std::string getSSLPropertyName(SSLProperty sslProperty);
         };
 
       } /* namespace impl */

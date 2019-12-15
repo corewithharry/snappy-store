@@ -107,6 +107,8 @@ std::string ClientService::s_hostId;
 boost::mutex ClientService::s_globalLock;
 bool ClientService::s_initialized = false;
 SSLParameters ClientService::sslParams;
+thrift::ServerType::type ClientService::m_reqdServerType =
+    thrift::ServerType::THRIFT_SNAPPY_CP;
 
 void DEFAULT_OUTPUT_FN(const char *str) {
   LogWriter::info() << str << _SNAPPY_NEWLINE;
@@ -361,7 +363,7 @@ ClientService::ClientService(const std::string& host, const int port,
     thrift::OpenConnectionArgs& connArgs) :
     // default for load-balance is false
     m_connArgs(initConnectionArgs(connArgs)), m_loadBalance(false),
-    m_loadBalanceInitialized(false), m_reqdServerType(thrift::ServerType::THRIFT_SNAPPY_CP),
+    m_loadBalanceInitialized(false),
     m_useFramedTransport(false), m_serverGroups(), m_transport(),
     m_client(createDummyProtocol()), m_connHosts(0), m_connId(0), m_token(),
     m_isOpen(false), m_pendingTXAttrs(), m_hasPendingTXAttrs(false),
@@ -431,8 +433,6 @@ ClientService::ClientService(const std::string& host, const int port,
     if ((propValue = props.find(ClientAttribute::SSL_PROPERTIES))
         != props.end()) {
       useSSL = true;
-      // TODO: SW: SSL params support
-      //sslParams = Utils::getSSLParameters(propValue->second);
       InternalUtils::splitCSV(propValue->second, sslParams);
       props.erase(propValue);
     }
@@ -670,7 +670,7 @@ protocol::TProtocol* ClientService::createProtocol(
   boost::shared_ptr<TSocket> socket;
   if (useSSL) {
     TSSLSocketFactory sslSocketFactory;
-    std::string sslProperty = "truststore";
+    std::string sslProperty = getSSLPropertyName(SSLProperty::TRUSTSTORE);
     std::string trustStoreCert;
     getSSLPropertyValue(sslProperty,trustStoreCert);
     sslSocketFactory.loadTrustedCertificates(trustStoreCert.c_str());
@@ -1892,5 +1892,8 @@ bool ClientService::handleException(const char* op, bool tryFailover,
   return true;
 }
 void ClientService::getSSLPropertyValue(std::string& propertyName, std::string& value){
-  value = sslParams.getSSLPropertyValue(propertyName);
+  sslParams.getSSLPropertyValue(propertyName, value);
+}
+std::string ClientService::getSSLPropertyName(SSLProperty sslProperty){
+  return sslParams.getSSLPropertyName(sslProperty);
 }

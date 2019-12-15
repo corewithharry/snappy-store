@@ -14,6 +14,19 @@ namespace io {
   namespace snappydata {
     namespace client {
       namespace impl {
+
+        enum class SSLProperty
+          : int {
+            CIPHERSUITES = 0,
+          CLIENTAUTH = 1,
+          ENABLEPROTOCOLS = 2,
+          KEYSTORE = 3,
+          KEYSTOREPASSWORD = 4,
+          PROTOCOL = 5,
+          TRUSTSTORE = 6,
+          TRUSTSTOREPASSWORD = 7
+        };
+
         class SSLParameters {
         private:
 //          SSLParameters();
@@ -24,14 +37,16 @@ namespace io {
           std::set<std::string> sslProperties = { "cipher-suites",
                                                   "client-auth",
                                                   "enabled-protocols",
-                                                  "keystore", "keystore-type",
+                                                  "keystore",
+                                                  "keystore-password",
                                                   "protocol", "truststore",
                                                   "truststore-password" };
         public:
 
           void setSSLProperty(std::string &propertyName, std::string& value);
-          std::string getSSLPropertyValue(std::string &propertyName);
-
+          void getSSLPropertyValue(std::string &propertyName,
+              std::string& value);
+          std::string getSSLPropertyName(SSLProperty sslProperty);
           void operator()(const std::string& str);
         };
       }
