@@ -301,6 +301,11 @@ void ControlConnection::failoverToAvailableHost(
             || m_snappyServerType
                 == thrift::ServerType::THRIFT_SNAPPY_CP_SSL) {
           TSSLSocketFactory sslSocketFactory;
+          std::string sslProperty = "truststore";
+          std::string trustStoreCert;
+          ClientService::getSSLPropertyValue(sslProperty, trustStoreCert);
+          sslSocketFactory.loadTrustedCertificates(trustStoreCert.c_str());
+          sslSocketFactory.authenticate(false);
           tTransport = sslSocketFactory.createSocket(controlAddr.hostName,
               controlAddr.port);
         } else if (m_snappyServerType == thrift::ServerType::THRIFT_LOCATOR_BP

@@ -42,6 +42,7 @@
 #include <boost/thread/mutex.hpp>
 
 #include "../thrift/SnappyDataService.h"
+#include "SSLParameters.h"
 
 using namespace apache::thrift;
 
@@ -217,7 +218,7 @@ namespace io {
           static std::string s_hostId;
           static boost::mutex s_globalLock;
           static bool s_initialized;
-
+          static SSLParameters sslParams;
           /**
            * Global initialization that is done only once.
            * The s_globalLock must be held in the invocation.
@@ -397,7 +398,7 @@ namespace io {
           inline bool isFrameTransport() const noexcept {
             return m_useFramedTransport;
           }
-
+          static void getSSLPropertyValue(std::string& propertyName, std::string& value);
         };
 
       } /* namespace impl */

@@ -106,6 +106,7 @@ std::string ClientService::s_hostName;
 std::string ClientService::s_hostId;
 boost::mutex ClientService::s_globalLock;
 bool ClientService::s_initialized = false;
+SSLParameters ClientService::sslParams;
 
 void DEFAULT_OUTPUT_FN(const char *str) {
   LogWriter::info() << str << _SNAPPY_NEWLINE;
@@ -409,7 +410,7 @@ ClientService::ClientService(const std::string& host, const int port,
     bool binaryProtocol = false;
     bool framedTransport = false;
     bool useSSL = false;
-    //SSLSocketParameters sslParams = null;
+
     std::map<std::string, std::string>::iterator propValue;
 
     std::map<std::string, std::string>& props = connArgs.properties;
@@ -432,6 +433,7 @@ ClientService::ClientService(const std::string& host, const int port,
       useSSL = true;
       // TODO: SW: SSL params support
       //sslParams = Utils::getSSLParameters(propValue->second);
+      InternalUtils::splitCSV(propValue->second, sslParams);
       props.erase(propValue);
     }
     m_reqdServerType = getServerType(true, binaryProtocol, useSSL);
@@ -668,11 +670,11 @@ protocol::TProtocol* ClientService::createProtocol(
   boost::shared_ptr<TSocket> socket;
   if (useSSL) {
     TSSLSocketFactory sslSocketFactory;
-//    sslSocketFactory.ciphers("TLS_RSA_WITH_AES_128_CBC_SHA:TLS_RSA_WITH_AES_256_CBC_SHA:TLS_RSA_WITH_AES_128_CBC_SHA256:TLS_RSA_WITH_AES_256_CBC_SHA256");
-    sslSocketFactory.loadTrustedCertificates("/home/pbisen/SSLTest/self-signed-cert/cacerts.pem");
-//    sslSocketFactory.loadPrivateKey("/home/pbisen/SSLTest/trustStore.key");
-//    sslSocketFactory.loadCertificate("/usr/local/share/ca-certificates/myapp-cer.pem");
-    sslSocketFactory.authenticate(true);
+    std::string sslProperty = "truststore";
+    std::string trustStoreCert;
+    getSSLPropertyValue(sslProperty,trustStoreCert);
+    sslSocketFactory.loadTrustedCertificates(trustStoreCert.c_str());
+    sslSocketFactory.authenticate(false);
     socket = sslSocketFactory.createSocket(hostAddr.hostName, hostAddr.port);
   } else {
     socket.reset(new TSocket(hostAddr.hostName, hostAddr.port));
@@ -1888,4 +1890,7 @@ bool ClientService::handleException(const char* op, bool tryFailover,
 
   updateFailedServersForCurrent(failedServers, true, te);
   return true;
+}
+void ClientService::getSSLPropertyValue(std::string& propertyName, std::string& value){
+  value = sslParams.getSSLPropertyValue(propertyName);
 }
