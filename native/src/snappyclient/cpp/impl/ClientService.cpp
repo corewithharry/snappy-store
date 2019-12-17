@@ -359,11 +359,12 @@ void ClientService::setPendingTransactionAttrs(
 ClientService::ClientService(const std::string& host, const int port,
     thrift::OpenConnectionArgs& connArgs) :
     // default for load-balance is false
-    m_connArgs(initConnectionArgs(connArgs)), m_loadBalance(false), m_reqdServerType(
-        thrift::ServerType::THRIFT_SNAPPY_CP), m_useFramedTransport(false), m_serverGroups(), m_transport(), m_client(
-        createDummyProtocol()), m_connHosts(0), m_connId(0), m_token(), m_isOpen(
-        false), m_pendingTXAttrs(), m_hasPendingTXAttrs(false), m_isolationLevel(
-        IsolationLevel::NONE), m_lock(), m_loadBalanceInitialized(false) {
+    m_connArgs(initConnectionArgs(connArgs)), m_loadBalance(false),
+    m_loadBalanceInitialized(false), m_reqdServerType(thrift::ServerType::THRIFT_SNAPPY_CP),
+    m_useFramedTransport(false), m_serverGroups(), m_transport(),
+    m_client(createDummyProtocol()), m_connHosts(0), m_connId(0), m_token(),
+    m_isOpen(false), m_pendingTXAttrs(), m_hasPendingTXAttrs(false),
+    m_isolationLevel(IsolationLevel::NONE), m_lock() {
   std::map<std::string, std::string>& props = connArgs.properties;
   std::map<std::string, std::string>::iterator propValue;
 
@@ -1863,7 +1864,11 @@ bool ClientService::handleException(const char* op, bool tryFailover,
     std::set<thrift::HostAddress>& failedServers, const TException& te) {
 
   if (!m_isOpen) {
-    newSnappyExceptionForConnectionClose(op, m_currentHostAddr);
+    if (createNewConnection) {
+      newSnappyExceptionForConnectionClose(op, m_currentHostAddr);
+    } else {
+      throwSQLExceptionForNodeFailure(op, te);
+    }
   }
   if (!m_loadBalance || m_isolationLevel != IsolationLevel::NONE) {
     tryFailover = false;

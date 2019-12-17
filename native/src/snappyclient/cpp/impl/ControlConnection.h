@@ -93,11 +93,13 @@ namespace io {
           static std::vector<std::unique_ptr<ControlConnection> > s_allConnections;
           /** Global lock for {@link allConnections} */
           static boost::mutex s_allConnsLock;
+
           /*********Member functions**************/
           ControlConnection() :
-              m_serverGroups(std::set<std::string>()) {
+              m_snappyServerType(thrift::ServerType::THRIFT_SNAPPY_CP),
+              m_serverGroups(std::set<std::string>()), m_framedTransport(false) {
           }
-          ;
+
           ControlConnection(ClientService * const &service);
 
           void failoverToAvailableHost(
