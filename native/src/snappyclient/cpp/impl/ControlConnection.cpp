@@ -97,7 +97,7 @@ const boost::optional<ControlConnection&> ControlConnection::getOrCreateControlC
       if (result == _locators.end()) {
         continue;
       } else {
-        auto serviceServerType = service->getServerType(true, false, false); // TODO: need to discuss with sumedh about this getServerType method
+        auto serviceServerType = service->getServerType();
         auto contrConnServerType = controlConn->m_snappyServerType;
         if (contrConnServerType == serviceServerType) {
           return *controlConn;
