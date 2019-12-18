@@ -1550,6 +1550,27 @@ public class GfxdSystemProcedures extends SystemProcedures {
     }
   }
 
+  public static void CHECK_AUTHZ_ON_EXT_TABLES(String currentUser,
+     String allTableString, String[] resultDetails) throws SQLException {
+    try {
+      if (GemFireXDUtils.TraceSysProcedures) {
+        SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_SYS_PROCEDURES,
+                "executing CHECK_AUTHZ_ON_EXT_TABLES");
+      }
+      GfxdListResultCollector collector = new GfxdListResultCollector();
+      // ConnectionId is not being used for GET_DEPLOYED_JARS; hence passing dummy value(0L)
+      GetLeadNodeInfoMsg msg = new GetLeadNodeInfoMsg(
+          collector, GetLeadNodeInfoMsg.DataReqType.CHECK_EXT_TABLE_PERMISSION,
+              0L, new Object[] {currentUser, allTableString});
+      msg.executeFunction();
+      ArrayList<Object> result = collector.getResult();
+      String res = (String)result.get(0);
+      resultDetails[0] = res;
+    } catch (StandardException se) {
+      throw PublicAPI.wrapStandardException(se);
+    }
+  }
+
   /**
    * A recovery mode procedure which allows the user to export the specified(all) tables/views
    * in the specified format at the specified location.
