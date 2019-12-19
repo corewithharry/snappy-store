@@ -148,6 +148,10 @@ public class GetLeadNodeInfoMsg extends MemberExecutorMessage<Object> {
 
   private String checkExternalTableAuthorization() throws IOException {
     if (!Misc.isSecurityEnabled()) return null;
+    boolean checkAuthOfExternalTables = Boolean.parseBoolean(
+            System.getProperty("CHECK_EXTERNAL_TABLE_AUTHZ"));
+    if (!checkAuthOfExternalTables) return null;
+
     String user = (String)this.additionalArgs[0];
     String allTableStr = (String)this.additionalArgs[1];
     String[] allTable = allTableStr.split(",");
