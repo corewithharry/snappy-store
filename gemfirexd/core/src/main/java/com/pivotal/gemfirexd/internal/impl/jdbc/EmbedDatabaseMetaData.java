@@ -3853,7 +3853,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	}
 
 	static final protected String swapNull(String s) {
-		return (s == null ? "%" : s);
+		return (s == null ? "%" : StringUtil.SQLToUpperCase(s));
 	}
 
 	/**
