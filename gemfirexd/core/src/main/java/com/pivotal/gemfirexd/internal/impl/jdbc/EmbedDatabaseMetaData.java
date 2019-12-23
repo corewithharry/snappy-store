@@ -53,6 +53,7 @@ import java.sql.RowIdLifetime;
 import java.io.IOException;
 import java.io.InputStream;
 
+import com.gemstone.gemfire.internal.cache.GemFireCacheImpl;
 import com.pivotal.gemfirexd.internal.engine.Misc;
 import com.pivotal.gemfirexd.internal.engine.diag.SysVTIs;
 import com.pivotal.gemfirexd.internal.engine.locks.GfxdLockSet;
@@ -3853,7 +3854,8 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	}
 
 	static final protected String swapNull(String s) {
-		return (s == null ? "%" : s);
+		boolean isSnappyStore = GemFireCacheImpl.getInternalProductCallbacks().isSnappyStore();
+		return (s == null ? "%" : (isSnappyStore ? StringUtil.SQLToUpperCase(s) : s));
 	}
 
 	/**
