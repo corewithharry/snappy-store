@@ -1918,32 +1918,46 @@ std::string ClientService::getSSLPropertyName(SSLProperty sslProperty){
 }
 boost::shared_ptr<TSSLSocket> ClientService::createSocket(
     const std::string& host, int port) {
-  try{
+  try {
     TSSLSocketFactory sslSocketFactory;
-     std::string sslProperty = this->getSSLPropertyName(SSLProperty::CLIENTAUTH);
-     std::string clientAuth = this->getSSLPropertyValue(sslProperty);
-     if (!clientAuth.compare("true")) {
-       sslSocketFactory.authenticate(true);
-       sslProperty = this->getSSLPropertyName(SSLProperty::KEYSTORE);
-       std::string propVal = this->getSSLPropertyValue(sslProperty);
-       sslSocketFactory.loadCertificate(propVal.c_str());
-       sslProperty = this->getSSLPropertyName(SSLProperty::TRUSTSTORE);
-       propVal = this->getSSLPropertyValue(sslProperty);
-       sslSocketFactory.loadPrivateKey(propVal.c_str());
-   //    sslSocketFactory.getPassword();
-     } else {
-       sslProperty = this->getSSLPropertyName(SSLProperty::TRUSTSTORE);
-       std::string trustStoreCert = this->getSSLPropertyValue(sslProperty);
-       sslSocketFactory.loadTrustedCertificates(trustStoreCert.c_str());
-       sslSocketFactory.authenticate(false);
-     }
+    std::string sslProperty = this->getSSLPropertyName(
+        SSLProperty::CLIENTAUTH);
+    std::string clientAuth = this->getSSLPropertyValue(sslProperty);
+    if (!clientAuth.compare("true")) {
+      sslSocketFactory.authenticate(true);
+      sslProperty = this->getSSLPropertyName(SSLProperty::KEYSTORE);
+      std::string propVal = this->getSSLPropertyValue(sslProperty);
+      sslSocketFactory.loadCertificate(propVal.c_str());
+      sslProperty = this->getSSLPropertyName(SSLProperty::TRUSTSTORE);
+      propVal = this->getSSLPropertyValue(sslProperty);
+      sslSocketFactory.loadPrivateKey(propVal.c_str());
+      /*TODO:
+       * keystore-password and truststore-password fields are passed to OpenSSL API by function callback TSSLSocketFactory.getPassword.
+       * This needs to call the appropriate callback method to fetch password field from UI by extending TSSLSocketFactory.
+       * This can be tackled as a separate task and needs discussion on how to tie up UI with
+       * the callback cleanly (and also handle the case when UI is not being used directly).
+       *
+       * */
 
-     return  sslSocketFactory.createSocket(host, port);
-  }catch(const TSSLException& ex){
+      sslProperty = this->getSSLPropertyName(SSLProperty::CIPHERSUITES);
+      propVal = this->getSSLPropertyValue(sslProperty);
+      if(!propVal.empty()){
+        sslSocketFactory.ciphers(propVal);
+      }
+
+    } else {
+      sslProperty = this->getSSLPropertyName(SSLProperty::TRUSTSTORE);
+      std::string trustStoreCert = this->getSSLPropertyValue(sslProperty);
+      sslSocketFactory.loadTrustedCertificates(trustStoreCert.c_str());
+      sslSocketFactory.authenticate(false);
+    }
+
+    return sslSocketFactory.createSocket(host, port);
+  } catch (const TSSLException& ex) {
     throw ex;
-  }catch(const TTransportException& ex){
+  } catch (const TTransportException& ex) {
     throw ex;
-  }catch(const std::exception& ex){
+  } catch (const std::exception& ex) {
     throw ex;
   }
 
