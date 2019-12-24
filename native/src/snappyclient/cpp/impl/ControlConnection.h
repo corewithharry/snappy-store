@@ -104,7 +104,8 @@ namespace io {
 
           void failoverToAvailableHost(
               std::set<thrift::HostAddress>& failedServers,
-              bool checkFailedControlHosts, const std::exception& failure);
+              bool checkFailedControlHosts, const std::exception& failure,
+              ClientService * const &service);
 
           void refreshAllHosts(
               const std::vector<thrift::HostAddress>& allHosts);
@@ -121,7 +122,8 @@ namespace io {
               std::set<std::string> serverGroups);
 
           void getPreferredServer(thrift::HostAddress& preferredServer,
-              const std::exception& failure, bool forFailover = false);
+              const std::exception& failure,ClientService * const &service,
+              bool forFailover = false);
 
         public:
 
@@ -132,7 +134,8 @@ namespace io {
           void getPreferredServer(thrift::HostAddress& preferredServer,
               const std::exception& failure,
               std::set<thrift::HostAddress>& failedServers,
-              std::set<std::string>& serverGroups, bool forFailover = false);
+              std::set<std::string>& serverGroups, ClientService * const &service,
+              bool forFailover = false);
 
           void searchRandomServer(
               const std::set<thrift::HostAddress>& skipServers,

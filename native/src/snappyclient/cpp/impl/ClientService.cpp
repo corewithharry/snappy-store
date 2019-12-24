@@ -106,9 +106,6 @@ std::string ClientService::s_hostName;
 std::string ClientService::s_hostId;
 boost::mutex ClientService::s_globalLock;
 bool ClientService::s_initialized = false;
-SSLParameters ClientService::sslParams;
-thrift::ServerType::type ClientService::m_reqdServerType =
-    thrift::ServerType::THRIFT_SNAPPY_CP;
 
 void DEFAULT_OUTPUT_FN(const char *str) {
   LogWriter::info() << str << _SNAPPY_NEWLINE;
@@ -363,7 +360,7 @@ ClientService::ClientService(const std::string& host, const int port,
     thrift::OpenConnectionArgs& connArgs) :
     // default for load-balance is false
     m_connArgs(initConnectionArgs(connArgs)), m_loadBalance(false),
-    m_loadBalanceInitialized(false),
+    m_loadBalanceInitialized(false), m_reqdServerType(thrift::ServerType::THRIFT_SNAPPY_CP),
     m_useFramedTransport(false), m_serverGroups(), m_transport(),
     m_client(createDummyProtocol()), m_connHosts(0), m_connId(0), m_token(),
     m_isOpen(false), m_pendingTXAttrs(), m_hasPendingTXAttrs(false),
@@ -407,15 +404,43 @@ ClientService::ClientService(const std::string& host, const int port,
       props.erase(propValue);
     }
 
+    // read the AQP properties
+    if ((propValue = props.find(ClientAttribute::AQP_ERROR)) != props.end()) {
+      try {
+        double errorVal = boost::lexical_cast<double>(propValue->second);
+        if (errorVal < 0.0 || errorVal > 1.0) {
+          throw std::invalid_argument(":Invalid AQP Error value:");
+        }
+        props.erase(propValue);
+      } catch (const boost::bad_lexical_cast& ex) {
+        props.erase(propValue);
+        throw ex;
+      }
+    }
+    if ((propValue = props.find(ClientAttribute::AQP_CONFIDENCE))
+        != props.end()) {
+      try {
+        double errorVal = boost::lexical_cast<double>(propValue->second);
+        if (errorVal < 0.0 || errorVal > 1.0) {
+          throw std::invalid_argument(":Invalid AQP Confidence value:");
+        }
+        props.erase(propValue);
+      } catch (const boost::bad_lexical_cast& ex) {
+        throw ex;
+      }
+    }
+    if ((propValue = props.find(ClientAttribute::AQP_BEHAVIOR)) != props.end()) {
+      if (propValue->second.empty()) {
+        throw std::invalid_argument(":Invalid AQP Behavior value:");
+      }
+      props.erase(propValue);
+    }
     // now check for the protocol details like SSL etc
     // and reqd snappyServerType
     bool binaryProtocol = false;
     bool framedTransport = false;
     bool useSSL = false;
 
-    std::map<std::string, std::string>::iterator propValue;
-
-    std::map<std::string, std::string>& props = connArgs.properties;
     if ((propValue = props.find(ClientAttribute::THRIFT_USE_BINARY_PROTOCOL))
         != props.end()) {
       binaryProtocol = boost::iequals(propValue->second, "true");
@@ -433,7 +458,7 @@ ClientService::ClientService(const std::string& host, const int port,
     if ((propValue = props.find(ClientAttribute::SSL_PROPERTIES))
         != props.end()) {
       useSSL = true;
-      InternalUtils::splitCSV(propValue->second, sslParams);
+      InternalUtils::splitCSV(propValue->second, m_sslParams);
       props.erase(propValue);
     }
     m_reqdServerType = getServerType(true, binaryProtocol, useSSL);
@@ -489,7 +514,7 @@ void ClientService::openConnection(thrift::HostAddress& hostAddr,
         if (m_loadBalance) {
           // at this point query the control service for preferred server
           controlConn->getPreferredServer(hostAddr, te, failedServers,
-              this->m_serverGroups, false);
+              this->m_serverGroups, this, false);
         }
 
         m_currentHostAddr = hostAddr;
@@ -669,13 +694,7 @@ protocol::TProtocol* ClientService::createProtocol(
 
   boost::shared_ptr<TSocket> socket;
   if (useSSL) {
-    TSSLSocketFactory sslSocketFactory;
-    std::string sslProperty = getSSLPropertyName(SSLProperty::TRUSTSTORE);
-    std::string trustStoreCert;
-    getSSLPropertyValue(sslProperty,trustStoreCert);
-    sslSocketFactory.loadTrustedCertificates(trustStoreCert.c_str());
-    sslSocketFactory.authenticate(false);
-    socket = sslSocketFactory.createSocket(hostAddr.hostName, hostAddr.port);
+    socket = this->createSocket(hostAddr.hostName, hostAddr.port);
   } else {
     socket.reset(new TSocket(hostAddr.hostName, hostAddr.port));
   }
@@ -1891,9 +1910,41 @@ bool ClientService::handleException(const char* op, bool tryFailover,
   updateFailedServersForCurrent(failedServers, true, te);
   return true;
 }
-void ClientService::getSSLPropertyValue(std::string& propertyName, std::string& value){
-  sslParams.getSSLPropertyValue(propertyName, value);
+std::string ClientService::getSSLPropertyValue(std::string& propertyName){
+   return m_sslParams.getSSLPropertyValue(propertyName);
 }
 std::string ClientService::getSSLPropertyName(SSLProperty sslProperty){
-  return sslParams.getSSLPropertyName(sslProperty);
+  return m_sslParams.getSSLPropertyName(sslProperty);
+}
+boost::shared_ptr<TSSLSocket> ClientService::createSocket(
+    const std::string& host, int port) {
+  try{
+    TSSLSocketFactory sslSocketFactory;
+     std::string sslProperty = this->getSSLPropertyName(SSLProperty::CLIENTAUTH);
+     std::string clientAuth = this->getSSLPropertyValue(sslProperty);
+     if (!clientAuth.compare("true")) {
+       sslSocketFactory.authenticate(true);
+       sslProperty = this->getSSLPropertyName(SSLProperty::KEYSTORE);
+       std::string propVal = this->getSSLPropertyValue(sslProperty);
+       sslSocketFactory.loadCertificate(propVal.c_str());
+       sslProperty = this->getSSLPropertyName(SSLProperty::TRUSTSTORE);
+       propVal = this->getSSLPropertyValue(sslProperty);
+       sslSocketFactory.loadPrivateKey(propVal.c_str());
+   //    sslSocketFactory.getPassword();
+     } else {
+       sslProperty = this->getSSLPropertyName(SSLProperty::TRUSTSTORE);
+       std::string trustStoreCert = this->getSSLPropertyValue(sslProperty);
+       sslSocketFactory.loadTrustedCertificates(trustStoreCert.c_str());
+       sslSocketFactory.authenticate(false);
+     }
+
+     return  sslSocketFactory.createSocket(host, port);
+  }catch(const TSSLException& ex){
+    throw ex;
+  }catch(const TTransportException& ex){
+    throw ex;
+  }catch(const std::exception& ex){
+    throw ex;
+  }
+
 }

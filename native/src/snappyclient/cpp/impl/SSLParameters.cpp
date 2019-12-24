@@ -34,14 +34,15 @@ void SSLParameters::setSSLProperty(std::string &propertyName,
     throw std::invalid_argument(":Unknown SSL Property:" + propertyName );
   }
 }
-void SSLParameters::getSSLPropertyValue(std::string &propertyName,
-    std::string& value) {
+std::string SSLParameters::getSSLPropertyValue(std::string &propertyName) {
+  std::string val = "";
   auto itr = sslProperties.find(propertyName);
   if (itr != sslProperties.end()) {
     auto itr = sslPropValMap.find(propertyName);
     if (itr != sslPropValMap.end()) {
-      value = itr->second;
+      val = itr->second;
     }
+    return val;
   } else {
     throw std::invalid_argument(":Unknown SSL Property:" + propertyName);
   }

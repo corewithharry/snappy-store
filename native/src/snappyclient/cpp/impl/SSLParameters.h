@@ -44,8 +44,7 @@ namespace io {
         public:
 
           void setSSLProperty(std::string &propertyName, std::string& value);
-          void getSSLPropertyValue(std::string &propertyName,
-              std::string& value);
+          std::string getSSLPropertyValue(std::string &propertyName);
           std::string getSSLPropertyName(SSLProperty sslProperty);
           void operator()(const std::string& str);
         };
