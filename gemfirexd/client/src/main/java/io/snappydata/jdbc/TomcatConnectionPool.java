@@ -28,7 +28,6 @@ import java.util.concurrent.ConcurrentMap;
 import java.util.stream.Collectors;
 
 import com.pivotal.gemfirexd.Attribute;
-import com.sun.xml.internal.fastinfoset.stax.events.Util;
 import org.apache.tomcat.jdbc.pool.DataSource;
 import org.apache.tomcat.jdbc.pool.PoolProperties;
 import org.apache.tomcat.jdbc.pool.interceptor.StatementFinalizer;
@@ -162,12 +161,12 @@ public class TomcatConnectionPool {
     poolProperties.setDriverClassName(driverClassName);
 
     String username = prop.getProperty(PoolProps.USER.key);
-    if (!Util.isEmptyString(username)) {
+    if (username != null && !username.isEmpty()) {
       poolProperties.setUsername(username);
     }
 
     String password = prop.getProperty(PoolProps.PASSWORD.key);
-    if (!Util.isEmptyString(password)) {
+    if (password != null && !password.isEmpty()) {
       poolProperties.setPassword(password);
     }
 

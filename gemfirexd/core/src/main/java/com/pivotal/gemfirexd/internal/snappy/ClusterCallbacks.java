@@ -46,6 +46,8 @@ public interface ClusterCallbacks {
 
   InterpreterExecute getInterpreterExecution(String sql, Version v, Long connId);
 
+  boolean isUserAuthorizedForExternalTable(String user, String table);
+
   SparkSQLExecute getSampleInsertExecute(String baseTable,  LeadNodeExecutionContext ctx,
       Version v, List<DataValueDescriptor[]> dvdRows, byte[] serializedDVDs);
 

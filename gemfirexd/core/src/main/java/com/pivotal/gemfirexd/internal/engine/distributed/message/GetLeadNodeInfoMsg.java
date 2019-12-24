@@ -21,11 +21,13 @@ import com.gemstone.gemfire.DataSerializer;
 import com.gemstone.gemfire.cache.execute.ResultCollector;
 import com.gemstone.gemfire.distributed.DistributedMember;
 import com.gemstone.gemfire.internal.snappy.CallbackFactoryProvider;
+import com.gemstone.gemfire.internal.snappy.StoreCallbacks;
 import com.pivotal.gemfirexd.internal.engine.GfxdConstants;
 import com.pivotal.gemfirexd.internal.engine.Misc;
 import com.pivotal.gemfirexd.internal.engine.distributed.utils.GemFireXDUtils;
 import com.pivotal.gemfirexd.internal.iapi.error.StandardException;
 import com.pivotal.gemfirexd.internal.shared.common.sanity.SanityManager;
+import com.pivotal.gemfirexd.internal.snappy.ClusterCallbacks;
 
 import java.io.*;
 import java.net.URL;
@@ -43,7 +45,7 @@ public class GetLeadNodeInfoMsg extends MemberExecutorMessage<Object> {
   private Long connID;
 
 
-  public enum DataReqType {GET_JARS, EXPORT_DATA, EXPORT_DDLS, GET_CLASS_BYTES}
+  public enum DataReqType {GET_JARS, EXPORT_DATA, EXPORT_DDLS, GET_CLASS_BYTES, CHECK_EXT_TABLE_PERMISSION}
 
   public GetLeadNodeInfoMsg(final ResultCollector<Object, Object> rc,
       DataReqType reqType, Long connID, Object... args) {
@@ -113,6 +115,9 @@ public class GetLeadNodeInfoMsg extends MemberExecutorMessage<Object> {
         case GET_CLASS_BYTES:
           result = getClassBytes();
           break;
+        case CHECK_EXT_TABLE_PERMISSION:
+          result = checkExternalTableAuthorization();
+          break;
         default:
           throw new IllegalArgumentException("GetLeadNodeInfoMsg:" +
               " Unknown data request type: " + this.requestType);
@@ -132,9 +137,33 @@ public class GetLeadNodeInfoMsg extends MemberExecutorMessage<Object> {
     }
     File file = new File(filePath);
     FileInputStream fip = new FileInputStream(file);
-    byte fileContent[] = new byte[(int)file.length()];
-    fip.read(fileContent);
-    return fileContent;
+    try {
+      byte fileContent[] = new byte[(int) file.length()];
+      fip.read(fileContent);
+      return fileContent;
+    } finally {
+      if (fip != null) fip.close();
+    }
+  }
+
+  private String checkExternalTableAuthorization() throws IOException {
+    if (!Misc.isSecurityEnabled()) return null;
+    boolean checkAuthOfExternalTables = Boolean.parseBoolean(
+            System.getProperty("CHECK_EXTERNAL_TABLE_AUTHZ"));
+    if (!checkAuthOfExternalTables) return null;
+
+    String user = (String)this.additionalArgs[0];
+    String allTableStr = (String)this.additionalArgs[1];
+    String[] allTable = allTableStr.split(",");
+    ClusterCallbacks ccb = com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks();
+    String result = null;
+    for (String t : allTable) {
+      if (!ccb.isUserAuthorizedForExternalTable(user, t)) {
+        result = t;
+        break;
+      }
+    }
+    return result;
   }
 
   private String exportData() {
