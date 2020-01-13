@@ -1581,9 +1581,8 @@ public class GfxdSystemProcedures extends SystemProcedures {
    * @param ignoreError ignores any exception while querying and exporting any of the tables.
    * @throws SQLException
    */
-  // comma separated table names
   public static void EXPORT_DATA(String exportUri, String formatType, String tableNames,
-      Boolean ignoreError) throws SQLException {
+      Boolean ignoreError, final ResultSet[] rs) throws SQLException {
     try {
       if (GemFireXDUtils.TraceSysProcedures) {
         SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_SYS_PROCEDURES,
@@ -1596,6 +1595,24 @@ public class GfxdSystemProcedures extends SystemProcedures {
           exportUri, formatType, tableNames, ignoreError);
 
       msg.executeFunction();
+      ArrayList<Object> result = collector.getResult();
+      String res = (String)result.get(0);
+      final ResultColumnDescriptor[] exportDataColumnInfo = {
+          EmbedResultSetMetaData.getResultColumnDescriptor("STATS", Types.VARCHAR, true, 300)
+      };
+      final CustomRowsResultSet.FetchDVDRows fetchRows = new CustomRowsResultSet.FetchDVDRows() {
+        Boolean firstTime = true;
+        @Override
+        public boolean getNext(DataValueDescriptor[] template) throws StandardException {
+          if (firstTime) {
+            template[0].setValue(res);
+            firstTime = false;
+            return true;
+          }
+          return false;
+        }
+      };
+      rs[0] = new CustomRowsResultSet(fetchRows, exportDataColumnInfo);
       if (GemFireXDUtils.TraceSysProcedures) {
         SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_SYS_PROCEDURES,
             "EXPORT_DATA successful.");
@@ -1611,7 +1628,7 @@ public class GfxdSystemProcedures extends SystemProcedures {
    * @throws SQLException
    */
 
-  public static void EXPORT_DDLS(String exportUri) throws SQLException  {
+  public static void EXPORT_DDLS(String exportUri, final ResultSet[] rs) throws SQLException  {
     try {
       if (GemFireXDUtils.TraceSysProcedures) {
         SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_SYS_PROCEDURES,
@@ -1622,6 +1639,24 @@ public class GfxdSystemProcedures extends SystemProcedures {
       GetLeadNodeInfoMsg msg = new GetLeadNodeInfoMsg(
           collector, GetLeadNodeInfoMsg.DataReqType.EXPORT_DDLS, connectionId, exportUri);
       msg.executeFunction();
+      ArrayList<Object> result = collector.getResult();
+      String res = (String)result.get(0);
+      final ResultColumnDescriptor[] exportDdlsColumnInfo = {
+          EmbedResultSetMetaData.getResultColumnDescriptor("STATS", Types.VARCHAR, true, 80)
+      };
+      final CustomRowsResultSet.FetchDVDRows fetchRows = new CustomRowsResultSet.FetchDVDRows() {
+        Boolean firstTime = true;
+        @Override
+        public boolean getNext(DataValueDescriptor[] template) throws StandardException {
+          if (firstTime) {
+            template[0].setValue(res);
+            firstTime = false;
+            return true;
+          }
+          return false;
+        }
+      };
+      rs[0] = new CustomRowsResultSet(fetchRows, exportDdlsColumnInfo);
       if (GemFireXDUtils.TraceSysProcedures) {
         SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_SYS_PROCEDURES,
             "EXPORT_DDLS successful.");

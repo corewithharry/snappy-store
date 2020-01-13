@@ -1835,7 +1835,7 @@ public final class GfxdDataDictionary extends DataDictionaryImpl {
           DataTypeDescriptor.getCatalogType(Types.VARCHAR),
           DataTypeDescriptor.getCatalogType(Types.BOOLEAN)};
       super.createSystemProcedureOrFunction("EXPORT_DATA",
-          sysUUID, arg_names, arg_types, 0, 0, RoutineAliasInfo.READS_SQL_DATA, null,
+          sysUUID, arg_names, arg_types, 0, 1, RoutineAliasInfo.READS_SQL_DATA, null,
           newlyCreatedRoutines, tc, GFXD_SYS_PROC_CLASSNAME, false);
     }
 
@@ -1845,7 +1845,7 @@ public final class GfxdDataDictionary extends DataDictionaryImpl {
           DataTypeDescriptor.getCatalogType(Types.VARCHAR),
       };
       super.createSystemProcedureOrFunction("EXPORT_DDLS", sysUUID, arg_name, arg_types, 0,
-          0, RoutineAliasInfo.READS_SQL_DATA, null, newlyCreatedRoutines,
+          1, RoutineAliasInfo.READS_SQL_DATA, null, newlyCreatedRoutines,
           tc, GFXD_SYS_PROC_CLASSNAME, false);
     }
 

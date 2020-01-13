@@ -75,11 +75,14 @@ public abstract class CallbackFactoryProvider {
       return null;
     }
 
-    public void exportData(Long connId, String exportUri, String formatType, String tableNames, Boolean ignoreError){
+    public String exportData(Long connId, String exportUri,
+        String formatType, String tableNames, Boolean ignoreError){
+      return null;
     }
 
     @Override
-    public void exportDDLs(Long connId, String exportUri) {
+    public String exportDDLs(Long connId, String exportUri) {
+      return null;
     }
 
     @Override

@@ -167,17 +167,15 @@ public class GetLeadNodeInfoMsg extends MemberExecutorMessage<Object> {
   }
 
   private String exportData() {
-    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider
+    return com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider
         .getClusterCallbacks().exportData(connID, additionalArgs[0].toString(),
-        additionalArgs[1].toString(), additionalArgs[2].toString(),
-        Boolean.parseBoolean(additionalArgs[3].toString()));
-    return "Data recovered";
+            additionalArgs[1].toString(), additionalArgs[2].toString(),
+            Boolean.parseBoolean(additionalArgs[3].toString()));
   }
 
   private String exportDDLs() {
-    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider
+    return com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider
         .getClusterCallbacks().exportDDLs(connID, additionalArgs[0].toString());
-    return "DDLs recovered.";
   }
 
   private String handleGetJarsRequest() {
