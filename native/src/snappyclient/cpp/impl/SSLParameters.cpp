@@ -25,7 +25,7 @@ using namespace io::snappydata::thrift;
 const std::set<std::string> SSLParameters::s_sslProperties {
     "protocol", "cipher-suites", "client-auth", "enabled-protocols", "keystore",
     "keystore-password", "certificate", "certificate-password", "truststore",
-    "truststore-password","UseSystemStore" };
+    "truststore-password","usesystemstore" };
 
 void SSLParameters::operator()(const std::string& str) {
   size_t spos;
@@ -73,7 +73,7 @@ std::string SSLParameters::getSSLPropertyName(SSLProperty sslProperty) {
     case SSLProperty::TRUSTSTOREPASSWORD:
       return "truststore-password";
     case SSLProperty::USESYSTEMSTORE:
-      return "UseSystemStore";
+      return "usesystemstore";
     default:
       throw std::invalid_argument(
           ":Unknown SSL Property enum: "
