@@ -14,7 +14,6 @@
  * permissions and limitations under the License. See accompanying
  * LICENSE file.
  */
-
 #include "SSLParameters.h"
 
 #include <boost/algorithm/string.hpp>
@@ -26,7 +25,7 @@ using namespace io::snappydata::thrift;
 const std::set<std::string> SSLParameters::s_sslProperties {
     "protocol", "cipher-suites", "client-auth", "enabled-protocols", "keystore",
     "keystore-password", "certificate", "certificate-password", "truststore",
-    "truststore-password" };
+    "truststore-password","UseSystemStore" };
 
 void SSLParameters::operator()(const std::string& str) {
   size_t spos;
@@ -73,6 +72,8 @@ std::string SSLParameters::getSSLPropertyName(SSLProperty sslProperty) {
       return "truststore";
     case SSLProperty::TRUSTSTOREPASSWORD:
       return "truststore-password";
+    case SSLProperty::USESYSTEMSTORE:
+      return "UseSystemStore";
     default:
       throw std::invalid_argument(
           ":Unknown SSL Property enum: "

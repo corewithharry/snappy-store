@@ -1938,6 +1938,13 @@ boost::shared_ptr<TSSLSocket> ClientService::createSSLSocket(
   if (!propVal.empty()) {
     sslSocketFactory.loadTrustedCertificates(propVal.c_str());
   }
+  else {
+    sslProperty = this->getSSLPropertyName(SSLProperty::USESYSTEMSTORE);
+    propVal = this->getSSLPropertyValue(sslProperty);
+    if (!propVal.empty() && boost::iequals(propVal, "true")) {
+      sslSocketFactory.loadSystemStoreCert();
+    }
+  }
   sslProperty = getSSLPropertyName(SSLProperty::CIPHERSUITES);
   propVal = getSSLPropertyValue(sslProperty);
   if (!propVal.empty()) {
