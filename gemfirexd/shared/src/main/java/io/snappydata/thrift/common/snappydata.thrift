@@ -794,6 +794,7 @@ struct CatalogMetadataDetails {
   9: optional CatalogFunctionObject                        catalogFunction
  10: optional list<CatalogPartitionObject>                 catalogPartitions
  11: optional CatalogStats                                 catalogStats
+ 12: optional string                                       newSchema
 }
 
 // different types of get operations returning CatalogMetadataDetails
@@ -829,6 +830,7 @@ const i32 CATALOG_ALTER_PARTITIONS                         = 115
 const i32 CATALOG_RENAME_PARTITIONS                        = 116
 const i32 CATALOG_LOAD_PARTITION                           = 117
 const i32 CATALOG_LOAD_DYNAMIC_PARTITIONS                  = 118
+const i32 CATALOG_ALTER_TABLE_SCHEMA                       = 119
 
 // type IDs for EntityId used by bulkClose API
 const byte BULK_CLOSE_RESULTSET                            = 1

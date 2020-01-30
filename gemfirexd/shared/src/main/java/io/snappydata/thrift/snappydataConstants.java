@@ -192,6 +192,8 @@ public class snappydataConstants {
 
   public static final int CATALOG_LOAD_DYNAMIC_PARTITIONS = 118;
 
+  public static final int CATALOG_ALTER_TABLE_SCHEMA = 119;
+
   public static final byte BULK_CLOSE_RESULTSET = (byte)1;
 
   public static final byte BULK_CLOSE_LOB = (byte)2;
