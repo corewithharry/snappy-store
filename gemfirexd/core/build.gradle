@@ -29,7 +29,7 @@ dependencies {
   compileOnly "com.pivotal:pxf-api:${pxfVersion}"
   compile "org.osgi:org.osgi.core:${osgiVersion}"
   compile "org.apache.ant:ant:${antVersion}"
-  compile "javax.servlet:javax.servlet-api:${servletAPIVersion}"
+  compile "javax.servlet:javax.servlet-api:${javaxServletVersion}"
   compile "org.apache.thrift:libthrift:${thriftVersion}"
   compile "com.esotericsoftware:kryo-shaded:${kryoVersion}"
 
