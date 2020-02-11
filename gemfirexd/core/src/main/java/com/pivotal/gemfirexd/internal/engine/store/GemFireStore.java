@@ -394,7 +394,7 @@ public final class GemFireStore implements AccessFactory, ModuleControl,
   public static final ThreadLocal<Boolean> externalCatalogInitThread =
       new ThreadLocal<>();
 
-  private Region<String, String> snappyMetadataCmdRgn;
+  private Region<String, Object> snappyMetadataCmdRgn;
 
   /**
    *************************************************************************
@@ -1122,6 +1122,13 @@ public final class GemFireStore implements AccessFactory, ModuleControl,
             this.gemFireCache.getLogger().info(
                 "GemFire Cache has come up in recovery mode.");
             this.gemFireCache.setRecoverMode(true);
+
+            if (props.containsKey(GfxdConstants.SNAPPY_PREFIX +
+                CacheServerLauncher.RECOVERY_STATE_CHUNK_SIZE)) {
+              this.gemFireCache.setRecoveryStateChunkSize(Integer.parseInt(props.
+                  getProperty(GfxdConstants.SNAPPY_PREFIX +
+                      CacheServerLauncher.RECOVERY_STATE_CHUNK_SIZE)));
+            }
           }
         }
       } catch (CacheExistsException ex) {
@@ -3095,7 +3102,7 @@ public final class GemFireStore implements AccessFactory, ModuleControl,
     this.snappyMetadataCmdRgn = gcr;
   }
 
-  public Region<String, String> getMetadataCmdRgn() {
+  public Region<String, Object> getMetadataCmdRgn() {
     return this.snappyMetadataCmdRgn;
   }
 

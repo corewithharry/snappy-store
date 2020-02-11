@@ -282,7 +282,7 @@ public abstract class GfxdDataSerializable implements GfxdSerializable {
     DSFIDFactory.registerGemFireXDClass(PROJECTION_ROW,
         () -> new ProjectionRow());
     DSFIDFactory.registerGemFireXDClass(LEAD_NODE_DATA_MSG,
-        () -> new GetLeadNodeInfoAsStringMessage());
+        () -> new GetLeadNodeInfoMsg());
     DSFIDFactory.registerGemFireXDClass(LEAD_DISK_STATE_MSG,
         () -> new RecoveredMetadataRequestMessage());
 

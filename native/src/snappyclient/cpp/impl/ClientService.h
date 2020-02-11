@@ -40,11 +40,13 @@
 
 #include <boost/shared_ptr.hpp>
 #include <boost/thread/mutex.hpp>
+#include <thrift/transport/TSSLSocket.h>
 
 #include "../thrift/SnappyDataService.h"
+#include "SSLParameters.h"
 
 using namespace apache::thrift;
-
+using namespace apache::thrift::transport;
 namespace apache {
   namespace thrift {
     namespace transport {
@@ -127,12 +129,20 @@ namespace io {
 
           static protocol::TProtocol* createDummyProtocol();
 
-          static protocol::TProtocol* createProtocol(
+          protocol::TProtocol* createProtocol(
               thrift::HostAddress& hostAddr,
               const thrift::ServerType::type serverType,
               const bool useFramedTransport,
-              //const SSLSocketParameters& sslParams,
               boost::shared_ptr<ClientTransport>& returnTransport);
+
+          inline std::string getSSLPropertyName(SSLProperty sslProperty) {
+            return m_sslParams.getSSLPropertyName(sslProperty);
+          }
+
+          inline std::string getSSLPropertyValue(
+              const std::string& propertyName) const {
+            return m_sslParams.getSSLPropertyValue(propertyName);
+          }
 
           void updateFailedServersForCurrent(
               std::set<thrift::HostAddress>& failedServers,
@@ -217,7 +227,7 @@ namespace io {
           static std::string s_hostId;
           static boost::mutex s_globalLock;
           static bool s_initialized;
-
+          SSLParameters m_sslParams;
           /**
            * Global initialization that is done only once.
            * The s_globalLock must be held in the invocation.
@@ -237,6 +247,10 @@ namespace io {
 
           static thrift::ServerType::type getServerType(bool isServer,
               bool useBinaryProtocol, bool useSSL);
+
+          inline thrift::ServerType::type getServerType() const noexcept {
+            return m_reqdServerType;
+          }
 
           inline bool isOpen() const noexcept {
             return m_isOpen;
@@ -263,6 +277,9 @@ namespace io {
           IsolationLevel getCurrentIsolationLevel() const noexcept {
             return m_isolationLevel;
           }
+
+          boost::shared_ptr<TSSLSocket> createSSLSocket(
+              const std::string& host, int port);
 
           void execute(thrift::StatementResult& result,
               const std::string& sql,
@@ -397,7 +414,6 @@ namespace io {
           inline bool isFrameTransport() const noexcept {
             return m_useFramedTransport;
           }
-
         };
 
       } /* namespace impl */

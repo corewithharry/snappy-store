@@ -370,7 +370,7 @@ namespace {
 }
 
 const std::pair<SnappyType::type, const char*> ColumnValue::
-s_typeMap[io::snappydata::VariadicSize<ColumnValue::UnionType>::size] = {
+s_typeMap[io::snappydata::VariadicCount<ColumnValue::UnionType>::count] = {
     std::make_pair(SnappyType::BOOLEAN, "bool_val"),
     std::make_pair(SnappyType::TINYINT, "byte_val"),
     std::make_pair(SnappyType::SMALLINT, "i16_val"),

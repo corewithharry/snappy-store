@@ -57,11 +57,12 @@ public class SQLLeadNodeExecutionObject  extends LeadNodeExecutionObject {
    */
   public SQLLeadNodeExecutionObject() {}
 
-  public SparkSQLExecute getSparkSQlExecute(Version v, LeadNodeExecutionContext ctx) throws Exception {
+  public SparkSQLExecute getSparkSQlExecute(Version v,
+      LeadNodeExecutionContext ctx, Object dfObject) throws Exception {
     if (isPreparedStatement() && !isPreparedPhase())  {
       getParams();
     }
-    return CallbackFactoryProvider.getClusterCallbacks().getSQLExecute(
+    return CallbackFactoryProvider.getClusterCallbacks().getSQLExecute(dfObject,
       sql, schema, ctx, v, this.isPreparedStatement(), this.isPreparedPhase(), this.pvs);
   }
 
@@ -202,6 +203,11 @@ public class SQLLeadNodeExecutionObject  extends LeadNodeExecutionObject {
 
   @Override
   public String getExceptionString() {
+    return this.sql;
+  }
+
+  @Override
+  public String getSql() {
     return this.sql;
   }
 }

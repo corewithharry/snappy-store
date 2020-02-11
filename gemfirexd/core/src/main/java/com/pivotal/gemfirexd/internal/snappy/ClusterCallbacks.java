@@ -43,17 +43,20 @@ public interface ClusterCallbacks {
 
   void stopExecutor();
 
-  SparkSQLExecute getSQLExecute(String sql, String schema, LeadNodeExecutionContext ctx,
+  SparkSQLExecute getSQLExecute(Object dfObject, String sql, String schema, LeadNodeExecutionContext ctx,
       Version v, boolean isPreparedStatement, boolean isPreparedPhase, ParameterValueSet pvs);
+
+  InterpreterExecute getInterpreterExecution(String sql, Version v, Long connId);
+
+  boolean isUserAuthorizedForExternalTable(String user, String table);
 
   SparkSQLExecute getSampleInsertExecute(String baseTable,  LeadNodeExecutionContext ctx,
       Version v, List<DataValueDescriptor[]> dvdRows, byte[] serializedDVDs);
 
-  void exportData(Long connId, String exportUri, String formatType, String tableNames, Boolean ignoreError);
+  void exportData(Long connId, String exportUri, String formatType, String tableNames,
+      Boolean ignoreError);
 
   void exportDDLs(Long connId, String exportUri);
-
-  void generateLoadScripts(Long connId);
 
   Object readDataType(ByteArrayDataInput in);
 

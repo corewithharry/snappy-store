@@ -120,7 +120,7 @@ namespace {
 #pragma warning(push)
 #pragma warning(disable: 4018)
 #endif
-      && result <= std::numeric_limits<NT>::max()) {
+      && result <= static_cast<int64_t>(std::numeric_limits<NT>::max())) {
 #ifdef _WINDOWS
 #pragma warning(pop)
 #endif

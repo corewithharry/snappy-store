@@ -77,5 +77,8 @@ const std::string ClientAttribute::THRIFT_USE_BINARY_PROTOCOL =
     ClientAttribute::addToHashSet("binary-protocol");
 const std::string ClientAttribute::THRIFT_USE_FRAMED_TRANSPORT =
     ClientAttribute::addToHashSet("framed-transport");
+const std::string ClientAttribute::AQP_ERROR = ClientAttribute::addToHashSet("spark.sql.aqp.error");
+const std::string ClientAttribute::AQP_CONFIDENCE = ClientAttribute::addToHashSet("spark.sql.aqp.confidence");
+const std::string ClientAttribute::AQP_BEHAVIOR = ClientAttribute::addToHashSet("spark.sql.aqp.behavior");
 
 } } }

@@ -359,11 +359,12 @@ void ClientService::setPendingTransactionAttrs(
 ClientService::ClientService(const std::string& host, const int port,
     thrift::OpenConnectionArgs& connArgs) :
     // default for load-balance is false
-    m_connArgs(initConnectionArgs(connArgs)), m_loadBalance(false), m_reqdServerType(
-        thrift::ServerType::THRIFT_SNAPPY_CP), m_useFramedTransport(false), m_serverGroups(), m_transport(), m_client(
-        createDummyProtocol()), m_connHosts(0), m_connId(0), m_token(), m_isOpen(
-        false), m_pendingTXAttrs(), m_hasPendingTXAttrs(false), m_isolationLevel(
-        IsolationLevel::NONE), m_lock(), m_loadBalanceInitialized(false) {
+    m_connArgs(initConnectionArgs(connArgs)), m_loadBalance(false),
+    m_loadBalanceInitialized(false), m_reqdServerType(thrift::ServerType::THRIFT_SNAPPY_CP),
+    m_useFramedTransport(false), m_serverGroups(), m_transport(),
+    m_client(createDummyProtocol()), m_connHosts(0), m_connId(0), m_token(),
+    m_isOpen(false), m_pendingTXAttrs(), m_hasPendingTXAttrs(false),
+    m_isolationLevel(IsolationLevel::NONE), m_lock() {
   std::map<std::string, std::string>& props = connArgs.properties;
   std::map<std::string, std::string>::iterator propValue;
 
@@ -380,7 +381,7 @@ ClientService::ClientService(const std::string& host, const int port,
     //default for load-balance is true on locators and false on servers
     // so tentatively set as true and adjust using the ControlConnection
     if (hasLoadBalance) {
-      m_loadBalance = (boost::iequals("true", propValue->second));
+      m_loadBalance = (boost::iequals(propValue->second, "true"));
       props.erase(propValue);
       m_loadBalanceInitialized = true;
     }
@@ -403,15 +404,43 @@ ClientService::ClientService(const std::string& host, const int port,
       props.erase(propValue);
     }
 
+    // read the AQP properties
+    if ((propValue = props.find(ClientAttribute::AQP_ERROR)) != props.end()) {
+      try {
+        double errorVal = boost::lexical_cast<double>(propValue->second);
+        if (errorVal < 0.0 || errorVal > 1.0) {
+          throw std::invalid_argument(":Invalid AQP Error value:");
+        }
+        props.erase(propValue);
+      } catch (const boost::bad_lexical_cast& ex) {
+        props.erase(propValue);
+        throw ex;
+      }
+    }
+    if ((propValue = props.find(ClientAttribute::AQP_CONFIDENCE))
+        != props.end()) {
+      try {
+        double errorVal = boost::lexical_cast<double>(propValue->second);
+        if (errorVal < 0.0 || errorVal > 1.0) {
+          throw std::invalid_argument(":Invalid AQP Confidence value:");
+        }
+        props.erase(propValue);
+      } catch (const boost::bad_lexical_cast& ex) {
+        throw ex;
+      }
+    }
+    if ((propValue = props.find(ClientAttribute::AQP_BEHAVIOR)) != props.end()) {
+      if (propValue->second.empty()) {
+        throw std::invalid_argument(":Invalid AQP Behavior value:");
+      }
+      props.erase(propValue);
+    }
     // now check for the protocol details like SSL etc
     // and reqd snappyServerType
     bool binaryProtocol = false;
     bool framedTransport = false;
     bool useSSL = false;
-    //SSLSocketParameters sslParams = null;
-    std::map<std::string, std::string>::iterator propValue;
 
-    std::map<std::string, std::string>& props = connArgs.properties;
     if ((propValue = props.find(ClientAttribute::THRIFT_USE_BINARY_PROTOCOL))
         != props.end()) {
       binaryProtocol = boost::iequals(propValue->second, "true");
@@ -429,8 +458,7 @@ ClientService::ClientService(const std::string& host, const int port,
     if ((propValue = props.find(ClientAttribute::SSL_PROPERTIES))
         != props.end()) {
       useSSL = true;
-      // TODO: SW: SSL params support
-      //sslParams = Utils::getSSLParameters(propValue->second);
+      InternalUtils::splitCSV(propValue->second, m_sslParams);
       props.erase(propValue);
     }
     m_reqdServerType = getServerType(true, binaryProtocol, useSSL);
@@ -486,7 +514,7 @@ void ClientService::openConnection(thrift::HostAddress& hostAddr,
         if (m_loadBalance) {
           // at this point query the control service for preferred server
           controlConn->getPreferredServer(hostAddr, te, failedServers,
-              this->m_serverGroups, false);
+              this->m_serverGroups, this, false);
         }
 
         m_currentHostAddr = hostAddr;
@@ -618,7 +646,7 @@ protocol::TProtocol* ClientService::createDummyProtocol() {
 
 protocol::TProtocol* ClientService::createProtocol(
     thrift::HostAddress& hostAddr, const thrift::ServerType::type serverType,
-    bool useFramedTransport,      //const SSLSocketParameters& sslParams,
+    bool useFramedTransport,
     boost::shared_ptr<ClientTransport>& returnTransport) {
   bool useBinaryProtocol;
   bool useSSL;
@@ -666,9 +694,7 @@ protocol::TProtocol* ClientService::createProtocol(
 
   boost::shared_ptr<TSocket> socket;
   if (useSSL) {
-    TSSLSocketFactory sslSocketFactory;
-    sslSocketFactory.authenticate(false);
-    socket = sslSocketFactory.createSocket(hostAddr.hostName, hostAddr.port);
+    socket = createSSLSocket(hostAddr.hostName, hostAddr.port);
   } else {
     socket.reset(new TSocket(hostAddr.hostName, hostAddr.port));
   }
@@ -1863,7 +1889,11 @@ bool ClientService::handleException(const char* op, bool tryFailover,
     std::set<thrift::HostAddress>& failedServers, const TException& te) {
 
   if (!m_isOpen) {
-    newSnappyExceptionForConnectionClose(op, m_currentHostAddr);
+    if (createNewConnection) {
+      newSnappyExceptionForConnectionClose(op, m_currentHostAddr);
+    } else {
+      throwSQLExceptionForNodeFailure(op, te);
+    }
   }
   if (!m_loadBalance || m_isolationLevel != IsolationLevel::NONE) {
     tryFailover = false;
@@ -1879,4 +1909,42 @@ bool ClientService::handleException(const char* op, bool tryFailover,
 
   updateFailedServersForCurrent(failedServers, true, te);
   return true;
+}
+
+boost::shared_ptr<TSSLSocket> ClientService::createSSLSocket(
+    const std::string& host, int port) {
+  SSLSocketFactory sslSocketFactory(m_sslParams);
+
+  std::string sslProperty = getSSLPropertyName(SSLProperty::CLIENTAUTH);
+  std::string propVal = getSSLPropertyValue(sslProperty);
+  if (!propVal.empty() && boost::iequals(propVal, "true")) {
+    sslSocketFactory.authenticate(true);
+    sslProperty = getSSLPropertyName(SSLProperty::KEYSTORE);
+    propVal = getSSLPropertyValue(sslProperty);
+    if (!propVal.empty()) {
+      sslSocketFactory.loadPrivateKey(propVal.c_str());
+    }
+    sslProperty = getSSLPropertyName(SSLProperty::CERTIFICATE);
+    propVal = getSSLPropertyValue(sslProperty);
+    if (!propVal.empty()) {
+      sslSocketFactory.loadCertificate(propVal.c_str());
+    }
+  } else {
+    sslSocketFactory.authenticate(false);
+  }
+
+  sslProperty = this->getSSLPropertyName(SSLProperty::TRUSTSTORE);
+  propVal = this->getSSLPropertyValue(sslProperty);
+  if (!propVal.empty()) {
+    sslSocketFactory.loadTrustedCertificates(propVal.c_str());
+  }
+  sslProperty = getSSLPropertyName(SSLProperty::CIPHERSUITES);
+  propVal = getSSLPropertyValue(sslProperty);
+  if (!propVal.empty()) {
+    sslSocketFactory.ciphers(propVal);
+  } else {
+    sslSocketFactory.ciphers("ALL:!ADH:!LOW:!EXP:!MD5:@STRENGTH");
+  }
+
+  return sslSocketFactory.createSocket(host, port);
 }

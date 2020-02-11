@@ -69,14 +69,14 @@
 
 namespace io { namespace snappydata {
 
-template<typename ... T>
-struct VariadicSize {
-  static constexpr int size = sizeof...(T);
+template<typename T>
+struct VariadicCount {
+  static constexpr int count = 1;
 };
 
-template<typename ... T>
-struct VariadicSize<boost::variant<T...> > {
-  static constexpr int size = sizeof...(T);
+template<typename T1, typename... TN>
+struct VariadicCount<boost::variant<T1, TN...> > {
+  static constexpr int count = 1 + sizeof...(TN);
 };
 
 namespace thrift {
@@ -229,7 +229,7 @@ private:
   UnionType m_val;
 
   static const std::pair<SnappyType::type, const char*>
-  s_typeMap[VariadicSize<UnionType>::size];
+  s_typeMap[VariadicCount<UnionType>::count];
 
   friend struct std::hash<io::snappydata::thrift::ColumnValue>;
 

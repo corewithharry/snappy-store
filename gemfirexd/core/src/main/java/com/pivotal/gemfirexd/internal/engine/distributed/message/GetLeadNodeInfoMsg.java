@@ -21,36 +21,49 @@ import com.gemstone.gemfire.DataSerializer;
 import com.gemstone.gemfire.cache.execute.ResultCollector;
 import com.gemstone.gemfire.distributed.DistributedMember;
 import com.gemstone.gemfire.internal.snappy.CallbackFactoryProvider;
+import com.gemstone.gemfire.internal.snappy.StoreCallbacks;
 import com.pivotal.gemfirexd.internal.engine.GfxdConstants;
 import com.pivotal.gemfirexd.internal.engine.Misc;
 import com.pivotal.gemfirexd.internal.engine.distributed.utils.GemFireXDUtils;
 import com.pivotal.gemfirexd.internal.iapi.error.StandardException;
 import com.pivotal.gemfirexd.internal.shared.common.sanity.SanityManager;
+import com.pivotal.gemfirexd.internal.snappy.ClusterCallbacks;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
+import java.io.*;
 import java.net.URL;
 import java.net.URLClassLoader;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.nio.file.Paths;
 import java.sql.SQLException;
 import java.util.Set;
 
-public class GetLeadNodeInfoAsStringMessage extends MemberExecutorMessage<Object> {
+public class GetLeadNodeInfoMsg extends MemberExecutorMessage<Object> {
 
   private Object[] additionalArgs;
   private DataReqType requestType;
   private Long connID;
 
-  public enum DataReqType {GET_JARS, EXPORT_DATA, EXPORT_DDLS, GENERATE_LOAD_SCRIPTS}
 
-  public GetLeadNodeInfoAsStringMessage(final ResultCollector<Object, Object> rc, DataReqType reqType, Long connID, Object... args) {
+  public enum DataReqType {GET_JARS, EXPORT_DATA, EXPORT_DDLS, GET_CLASS_BYTES, CHECK_EXT_TABLE_PERMISSION}
+
+  public GetLeadNodeInfoMsg(final ResultCollector<Object, Object> rc,
+      DataReqType reqType, Long connID, Object... args) {
     super(rc, null, false, true);
     this.requestType = reqType;
     this.additionalArgs = args;
     this.connID = connID;
   }
 
-  public GetLeadNodeInfoAsStringMessage() {
+  public GetLeadNodeInfoMsg(final ResultCollector<Object, Object> rc, DataReqType reqType, Long connID, String filePath) {
+    super(rc, null, false, true);
+    this.requestType = reqType;
+    this.additionalArgs = new Object[1];
+    this.additionalArgs[0] = filePath;
+    this.connID = connID;
+  }
+
+  public GetLeadNodeInfoMsg() {
     super(true);
   }
 
@@ -77,10 +90,10 @@ public class GetLeadNodeInfoAsStringMessage extends MemberExecutorMessage<Object
   protected void execute() throws Exception {
     if (GemFireXDUtils.TraceQuery) {
       SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_QUERYDISTRIB,
-          "GetLeadNodeInfoAsStringMessage.execute: ");
+          "GetLeadNodeInfoMsg.execute: ");
     }
     try {
-      String result = null;
+      Object result = null;
       switch (this.requestType) {
         case GET_JARS:
           result = handleGetJarsRequest();
@@ -88,26 +101,25 @@ public class GetLeadNodeInfoAsStringMessage extends MemberExecutorMessage<Object
         case EXPORT_DATA:
           if (GemFireXDUtils.TraceQuery) {
             SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_QUERYDISTRIB,
-                "GetLeadNodeInfoAsStringMessage - case EXPORT_DATA");
+                "GetLeadNodeInfoMsg - case EXPORT_DATA");
           }
           result = exportData();
           break;
         case EXPORT_DDLS:
           if (GemFireXDUtils.TraceQuery) {
             SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_QUERYDISTRIB,
-                "GetLeadNodeInfoAsStringMessage - case EXPORT_DDLS");
+                "GetLeadNodeInfoMsg - case EXPORT_DDLS");
           }
           result = exportDDLs();
           break;
-        case GENERATE_LOAD_SCRIPTS:
-          if (GemFireXDUtils.TraceQuery) {
-            SanityManager.DEBUG_PRINT(GfxdConstants.TRACE_QUERYDISTRIB,
-                "GetLeadNodeInfoAsStringMessage - case GENERATE_LOAD_SCRIPTS");
-          }
-          result = generateLoadScripts();
+        case GET_CLASS_BYTES:
+          result = getClassBytes();
+          break;
+        case CHECK_EXT_TABLE_PERMISSION:
+          result = checkExternalTableAuthorization();
           break;
         default:
-          throw new IllegalArgumentException("GetLeadNodeInfoAsStringMessage:" +
+          throw new IllegalArgumentException("GetLeadNodeInfoMsg:" +
               " Unknown data request type: " + this.requestType);
 
       }
@@ -117,21 +129,55 @@ public class GetLeadNodeInfoAsStringMessage extends MemberExecutorMessage<Object
     }
   }
 
+  private byte[] getClassBytes() throws IOException {
+    String filePath = (String)this.additionalArgs[0];
+    Path p = Paths.get(filePath);
+    if (!Files.exists(p)) {
+      throw new FileNotFoundException(filePath);
+    }
+    File file = new File(filePath);
+    FileInputStream fip = new FileInputStream(file);
+    try {
+      byte fileContent[] = new byte[(int) file.length()];
+      fip.read(fileContent);
+      return fileContent;
+    } finally {
+      if (fip != null) fip.close();
+    }
+  }
+
+  private String checkExternalTableAuthorization() throws IOException {
+    if (!Misc.isSecurityEnabled()) return null;
+    boolean checkAuthOfExternalTables = Boolean.parseBoolean(
+            System.getProperty("CHECK_EXTERNAL_TABLE_AUTHZ"));
+    if (!checkAuthOfExternalTables) return null;
+
+    String user = (String)this.additionalArgs[0];
+    String allTableStr = (String)this.additionalArgs[1];
+    String[] allTable = allTableStr.split(",");
+    ClusterCallbacks ccb = com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks();
+    String result = null;
+    for (String t : allTable) {
+      if (!ccb.isUserAuthorizedForExternalTable(user, t)) {
+        result = t;
+        break;
+      }
+    }
+    return result;
+  }
 
   private String exportData() {
-    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks().exportData(connID,
-        additionalArgs[0].toString(), additionalArgs[1].toString(), additionalArgs[2].toString(), Boolean.parseBoolean(additionalArgs[3].toString()));
+    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider
+        .getClusterCallbacks().exportData(connID, additionalArgs[0].toString(),
+        additionalArgs[1].toString(), additionalArgs[2].toString(),
+        Boolean.parseBoolean(additionalArgs[3].toString()));
     return "Data recovered";
   }
 
   private String exportDDLs() {
-    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks().exportDDLs(connID, additionalArgs[0].toString());
+    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider
+        .getClusterCallbacks().exportDDLs(connID, additionalArgs[0].toString());
     return "DDLs recovered.";
-  }
-
-  private String generateLoadScripts() {
-    com.pivotal.gemfirexd.internal.snappy.CallbackFactoryProvider.getClusterCallbacks().generateLoadScripts(connID);
-    return "load scripts generated";
   }
 
   private String handleGetJarsRequest() {
