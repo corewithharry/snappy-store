@@ -65,6 +65,11 @@ public abstract class CallbackFactoryProvider {
         return null;
     }
 
+    @Override
+    public boolean isUserAuthorizedForExternalTable(String user, String table) {
+      return false;
+    }
+
     public SparkSQLExecute getSampleInsertExecute(String baseTable,  LeadNodeExecutionContext ctx,
         Version v, List<DataValueDescriptor[]> dvdRows, byte[] serializedDVDs) {
       return null;
@@ -75,10 +80,6 @@ public abstract class CallbackFactoryProvider {
 
     @Override
     public void exportDDLs(Long connId, String exportUri) {
-    }
-
-    @Override
-    public void generateLoadScripts(Long connId) {
     }
 
     @Override

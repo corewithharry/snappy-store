@@ -716,7 +716,13 @@ cleanup:	for (int index = holder.size() - 1; index >= 0; index--) {
 	 */
 	private void flushErrorString()
 	{
-		errorStream.print(errorStringBuilder.get().toString());
+		//changes to fix SNAP-3176
+		String stmtText = errorStringBuilder.get().toString();
+		if (!stmtText.contains("SET @@session.sql_mode=ANSI_QUOTES") &&
+				!stmtText.contains("SELECT version FROM v$instance") &&
+				!stmtText.contains("SELECT @@version")) {
+			errorStream.print(stmtText);
+		}
 		errorStream.flush();
 		errorStringBuilder.reset();
 	}

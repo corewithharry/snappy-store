@@ -1950,7 +1950,7 @@ public class ClientServerDUnit extends ClientServerTestBase {
 
     // check new connections opened on locator and servers
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(1, -1, 1, 2);
+    assertNumConnections(1, -2, 1, 2);
 
     // Create a table
     Statement stmt = conn.createStatement();
@@ -1981,7 +1981,7 @@ public class ClientServerDUnit extends ClientServerTestBase {
     assertFalse(rs.next());
 
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(1, -1, 1, 2);
+    assertNumConnections(1, -2, 1, 2);
 
     // now open another connection with server1 URL
     final Connection conn2 = TestUtil.getNetConnection(localHost.getCanonicalHostName(),
@@ -1989,7 +1989,7 @@ public class ClientServerDUnit extends ClientServerTestBase {
 
     // check new connection opened on servers successfully load-balanced
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(-3, -1, 1, 2);
+    assertNumConnections(-3, -2, 1, 2);
 
     stmt = conn2.createStatement();
     rs = stmt.executeQuery("select * from TESTTABLE");
@@ -2006,14 +2006,14 @@ public class ClientServerDUnit extends ClientServerTestBase {
     assertFalse(rs.next());
 
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(-3, -1, 1, 2);
+    assertNumConnections(-3, -2, 1, 2);
 
     // now a third connection
     Connection conn3 = TestUtil.getNetConnection(localHost.getCanonicalHostName(),
         netPort, null, new Properties());
 
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(-4, -1, 1, 2);
+    assertNumConnections(-4, -2, 1, 2);
 
     // add expected exception for server connection failure
     addExpectedException(null, new Object[] { java.net.ConnectException.class,
@@ -2043,7 +2043,7 @@ public class ClientServerDUnit extends ClientServerTestBase {
 
     // check connections opened on second server
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(-4, -2, 2);
+    assertNumConnections(-4, -3, 2);
 
     removeExpectedException(null, new Object[] {
         java.net.ConnectException.class, DisconnectException.class,
@@ -2079,7 +2079,7 @@ public class ClientServerDUnit extends ClientServerTestBase {
 
     // check connection opened on second server
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(-5, -2, 2);
+    assertNumConnections(-5, -3, 2);
 
     // now drop the table and close the connections
     stmt = conn.createStatement();
@@ -2088,22 +2088,22 @@ public class ClientServerDUnit extends ClientServerTestBase {
     conn.close();
 
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(-5, -3, 2);
+    assertNumConnections(-5, -4, 2);
 
     conn2.close();
 
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(-5, -3, 2);
+    assertNumConnections(-5, -4, 2);
 
     conn3.close();
 
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(-5, -4, 2);
+    assertNumConnections(-5, -5, 2);
 
     conn4.close();
 
     assertNumConnections(-1, 0, locator);
-    assertNumConnections(-5, -5, 2);
+    assertNumConnections(-5, -6, 2);
   }
 
   /** test for exception when there is no data member available */

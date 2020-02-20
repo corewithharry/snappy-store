@@ -93,6 +93,9 @@ public:
   static const std::string ROUTE_QUERY;
   static const std::string THRIFT_USE_BINARY_PROTOCOL;
   static const std::string THRIFT_USE_FRAMED_TRANSPORT;
+  static const std::string AQP_ERROR;
+  static const std::string AQP_CONFIDENCE;
+  static const std::string AQP_BEHAVIOR;
 
   static const int DEFAULT_LOGIN_TIMEOUT = 0;
   static const int DEFAULT_SINGLE_HOP_MAX_CONN_PER_SERVER = 5;

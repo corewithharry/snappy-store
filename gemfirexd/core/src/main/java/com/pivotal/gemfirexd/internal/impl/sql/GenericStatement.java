@@ -173,6 +173,9 @@ public class GenericStatement
         private static final Pattern GRANT_REVOKE_INTP_PATTERN =
             Pattern.compile("^\\s*(GRANT|REVOKE)\\s+(PRIVILEGE)\\s+(EXEC)\\s+(SCALA)\\s+",
                 Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
+        private static final Pattern GRANT_ON_EXT_TABLE_PATTERN =
+            Pattern.compile("^\\s*(GRANT|REVOKE)\\s+(ALL)\\s+(ON)",
+               Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
         private static ExecutionEngineArbiter engineArbiter = new ExecutionEngineArbiter();
 // GemStone changes END
 	/**
@@ -241,7 +244,8 @@ public class GenericStatement
 			boolean checkCancellation, boolean isUpdateOrDeleteOrPut, Throwable cause) throws StandardException {
       GenericPreparedStatement gps = preparedStmt;
       String source = getSource();
-      boolean isGrantRevokeIntp = source != null ? GRANT_REVOKE_INTP_PATTERN.matcher(source).find() : false;
+      boolean isGrantRevokeIntp = source != null ? (GRANT_REVOKE_INTP_PATTERN.matcher(source).find()
+			  || GRANT_ON_EXT_TABLE_PATTERN.matcher(source).find()) : false;
       GeneratedClass ac = new SnappyActivationClass(lcc, !(isDDL || isGrantRevokeIntp),
         isPreparedStatement() && !isDDL && !isGrantRevokeIntp,
           isUpdateOrDeleteOrPut);

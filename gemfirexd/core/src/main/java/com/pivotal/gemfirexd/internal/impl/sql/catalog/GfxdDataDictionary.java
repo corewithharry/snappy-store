@@ -1815,6 +1815,19 @@ public final class GfxdDataDictionary extends DataDictionaryImpl {
     }
 
     {
+      // GET_JARS -- Smart Connectors will pull all the jars
+      String[] arg_names = new String[] { "USER", "ALLTABLES", "AUTHZRESULT"};
+      TypeDescriptor[] arg_types = new TypeDescriptor[] {
+              DataTypeDescriptor.getCatalogType(Types.VARCHAR),
+              DataTypeDescriptor.getCatalogType(Types.VARCHAR),
+              DataTypeDescriptor.getCatalogType(Types.VARCHAR)
+      };
+      super.createSystemProcedureOrFunction("CHECK_AUTHZ_ON_EXT_TABLES",
+              sysUUID, arg_names, arg_types, 1, 0, RoutineAliasInfo.READS_SQL_DATA, null,
+              newlyCreatedRoutines, tc, GFXD_SYS_PROC_CLASSNAME, false);
+    }
+
+    {
       String[] arg_names = new String[] {"PATH_URI", "FORMAT_TYPE", "TABLES", "IGNORE_ERROR"};
       TypeDescriptor[] arg_types = new TypeDescriptor[] {
           DataTypeDescriptor.getCatalogType(Types.VARCHAR),
@@ -1834,12 +1847,6 @@ public final class GfxdDataDictionary extends DataDictionaryImpl {
       super.createSystemProcedureOrFunction("EXPORT_DDLS", sysUUID, arg_name, arg_types, 0,
           0, RoutineAliasInfo.READS_SQL_DATA, null, newlyCreatedRoutines,
           tc, GFXD_SYS_PROC_CLASSNAME, false);
-    }
-
-    {
-      String[] arg_name = new String[] {};
-      TypeDescriptor[] arg_types = new TypeDescriptor[] {};
-      super.createSystemProcedureOrFunction("GENERATE_LOAD_SCRIPTS", sysUUID, arg_name, arg_types, 0, 0, RoutineAliasInfo.READS_SQL_DATA, null, newlyCreatedRoutines, tc, GFXD_SYS_PROC_CLASSNAME, false);
     }
 
     {

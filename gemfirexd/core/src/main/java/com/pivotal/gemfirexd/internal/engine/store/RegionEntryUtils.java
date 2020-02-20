@@ -1549,7 +1549,8 @@ public final class RegionEntryUtils {
 
     @Override
     public boolean isSnappyStore() {
-      return Misc.getMemStoreBooting().isSnappyStore();
+      GemFireStore store = Misc.getMemStoreBootingNoThrow();
+      return store != null && store.isSnappyStore();
     }
 
     @Override
