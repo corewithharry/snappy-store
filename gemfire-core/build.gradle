@@ -64,6 +64,7 @@ dependencies {
   compileOnly "org.springframework:spring-tx:${springVersion}"
   compileOnly "org.springframework.shell:spring-shell:${springShellVersion}"
   compile "org.xerial.snappy:snappy-java:${snappyJavaVersion}"
+  compile "org.apache.spark:spark-unsafe_${scalaBinaryVersion}:${sparkVersion}"
 
   compileOnly "org.apache.hadoop:hadoop-annotations:${hadoopVersion}"
   compileOnly("org.apache.hadoop:hadoop-auth:${hadoopVersion}")
@@ -123,7 +124,6 @@ dependencies {
   }
   compileOnly "com.jcraft:jsch:${jschVersion}"
   compileOnly "org.apache.ant:ant:${antVersion}"
-  compileOnly "org.apache.spark:spark-unsafe_${scalaBinaryVersion}:${sparkVersion}"
 
   compile project(subprojectBase + 'gemfire-jgroups')
   compile project(subprojectBase + 'gemfire-util')
