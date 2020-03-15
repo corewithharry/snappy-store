@@ -42,8 +42,6 @@ import java.io.IOException;
 import java.nio.channels.ReadableByteChannel;
 import javax.annotation.Nonnull;
 
-import org.apache.spark.unsafe.Platform;
-
 /**
  * A buffered DataInput abstraction over channel using direct byte buffers, and
  * using internal Unsafe class for best performance.
@@ -128,7 +126,7 @@ public class ChannelBufferUnsafeDataInputStream extends
     if (this.addrPosition >= this.addrLimit) {
       refillBuffer(this.buffer, 1, "readByte: premature end of stream");
     }
-    return Platform.getByte(null, this.addrPosition++);
+    return UnsafeHolder.getUnsafe().getByte(null, this.addrPosition++);
   }
 
   /**
@@ -151,9 +149,9 @@ public class ChannelBufferUnsafeDataInputStream extends
     }
     this.addrPosition += 2;
     if (UnsafeHolder.littleEndian) {
-      return Short.reverseBytes(Platform.getShort(null, addrPos));
+      return Short.reverseBytes(UnsafeHolder.getUnsafe().getShort(null, addrPos));
     } else {
-      return Platform.getShort(null, addrPos);
+      return UnsafeHolder.getUnsafe().getShort(null, addrPos);
     }
   }
 
@@ -185,9 +183,9 @@ public class ChannelBufferUnsafeDataInputStream extends
     }
     this.addrPosition += 8;
     if (UnsafeHolder.littleEndian) {
-      return Long.reverseBytes(Platform.getLong(null, addrPos));
+      return Long.reverseBytes(UnsafeHolder.getUnsafe().getLong(null, addrPos));
     } else {
-      return Platform.getLong(null, addrPos);
+      return UnsafeHolder.getUnsafe().getLong(null, addrPos);
     }
   }
 

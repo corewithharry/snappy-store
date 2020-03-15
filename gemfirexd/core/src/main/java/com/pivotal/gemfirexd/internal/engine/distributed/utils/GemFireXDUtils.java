@@ -83,6 +83,7 @@ import com.gemstone.gemfire.internal.offheap.OffHeapHelper;
 import com.gemstone.gemfire.internal.offheap.SimpleMemoryAllocatorImpl;
 import com.gemstone.gemfire.internal.offheap.annotations.Released;
 import com.gemstone.gemfire.internal.offheap.annotations.Unretained;
+import com.gemstone.gemfire.internal.shared.ClientResolverUtils;
 import com.gemstone.gemfire.internal.shared.ClientSharedData;
 import com.gemstone.gemfire.internal.shared.ClientSharedUtils;
 import com.gemstone.gemfire.internal.shared.HostLocationBase;
@@ -165,7 +166,6 @@ import com.pivotal.gemfirexd.internal.shared.common.reference.SQLState;
 import com.pivotal.gemfirexd.internal.shared.common.sanity.AssertFailure;
 import com.pivotal.gemfirexd.internal.shared.common.sanity.SanityManager;
 import org.apache.log4j.Logger;
-import org.apache.spark.unsafe.hash.Murmur3_x86_32;
 import org.apache.thrift.TBase;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TCompactProtocol;
@@ -3514,7 +3514,7 @@ public final class GemFireXDUtils {
     public int hashCode() {
       long h1 = this.key != null ? this.key.hashCode() : 0;
       long h2 = this.val != null ? this.val.hashCode() : 0;
-      return Murmur3_x86_32.hashLong(h1 | (h2 << 32L), 42);
+      return ClientResolverUtils.fastHashLong(h1 | (h2 << 32L));
     }
 
     @Override

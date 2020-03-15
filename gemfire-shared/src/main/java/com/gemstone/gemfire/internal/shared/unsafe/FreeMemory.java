@@ -18,8 +18,6 @@ package com.gemstone.gemfire.internal.shared.unsafe;
 
 import java.util.concurrent.atomic.AtomicLong;
 
-import org.apache.spark.unsafe.Platform;
-
 @SuppressWarnings("serial")
 public abstract class FreeMemory extends AtomicLong implements Runnable {
 
@@ -39,7 +37,7 @@ public abstract class FreeMemory extends AtomicLong implements Runnable {
   public void run() {
     final long address = tryFree();
     if (address != 0) {
-      Platform.freeMemory(address);
+      UnsafeHolder.getUnsafe().freeMemory(address);
     }
   }
 

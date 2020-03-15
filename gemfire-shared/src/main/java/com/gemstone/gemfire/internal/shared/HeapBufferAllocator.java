@@ -18,8 +18,7 @@ package com.gemstone.gemfire.internal.shared;
 
 import java.nio.ByteBuffer;
 
-import org.apache.spark.unsafe.Platform;
-import org.apache.spark.unsafe.memory.MemoryAllocator;
+import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
 
 /**
  * Heap ByteBuffer implementation of {@link BufferAllocator}.
@@ -44,8 +43,8 @@ public final class HeapBufferAllocator extends BufferAllocator {
   @Override
   public ByteBuffer allocateForStorage(int size) {
     ByteBuffer buffer = ByteBuffer.allocate(size);
-    if (MemoryAllocator.MEMORY_DEBUG_FILL_ENABLED) {
-      fill(buffer, MemoryAllocator.MEMORY_DEBUG_FILL_CLEAN_VALUE);
+    if (BufferAllocator.MEMORY_DEBUG_FILL_ENABLED) {
+      fill(buffer, BufferAllocator.MEMORY_DEBUG_FILL_CLEAN_VALUE);
     }
     return buffer;
   }
@@ -53,7 +52,7 @@ public final class HeapBufferAllocator extends BufferAllocator {
   @Override
   public void clearPostAllocate(ByteBuffer buffer, int position) {
     // JVM clears the allocated area, so only clear for DEBUG_FILL case
-    if (MemoryAllocator.MEMORY_DEBUG_FILL_ENABLED) {
+    if (BufferAllocator.MEMORY_DEBUG_FILL_ENABLED) {
       // clear till the capacity and not limit since former will be a factor
       // of 8 and hence more efficient in Unsafe.setMemory
       fill(buffer, (byte)0, position, buffer.capacity() - position);
@@ -67,7 +66,7 @@ public final class HeapBufferAllocator extends BufferAllocator {
 
   @Override
   public long baseOffset(ByteBuffer buffer) {
-    return Platform.BYTE_ARRAY_OFFSET + buffer.arrayOffset();
+    return UnsafeHolder.BYTE_ARRAY_OFFSET + buffer.arrayOffset();
   }
 
   @Override
@@ -80,11 +79,11 @@ public final class HeapBufferAllocator extends BufferAllocator {
       final int newLength = BufferAllocator.expandedSize(currentUsed, required);
       final byte[] newBytes = new byte[newLength];
       System.arraycopy(bytes, buffer.arrayOffset(), newBytes, 0, currentUsed);
-      if (MemoryAllocator.MEMORY_DEBUG_FILL_ENABLED) {
+      if (BufferAllocator.MEMORY_DEBUG_FILL_ENABLED) {
         // fill the remaining bytes
         ByteBuffer buf = ByteBuffer.wrap(newBytes, currentUsed,
             newLength - currentUsed);
-        fill(buf, MemoryAllocator.MEMORY_DEBUG_FILL_CLEAN_VALUE);
+        fill(buf, BufferAllocator.MEMORY_DEBUG_FILL_CLEAN_VALUE);
       }
       return ByteBuffer.wrap(newBytes).order(buffer.order());
     } else {

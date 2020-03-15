@@ -17,8 +17,8 @@
 package com.gemstone.gemfire.internal.offheap;
 
 import com.gemstone.gemfire.internal.SharedLibrary;
+import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
 import com.gemstone.gemfire.pdx.internal.unsafe.UnsafeWrapper;
-import org.apache.spark.unsafe.Platform;
 
 public final class UnsafeMemoryChunk implements MemoryChunk {
   private static final UnsafeWrapper unsafe;
@@ -99,7 +99,8 @@ public final class UnsafeMemoryChunk implements MemoryChunk {
     assert SimpleMemoryAllocatorImpl.validateAddressAndSizeWithinSlab(addr,
         length);
 
-    Platform.copyMemory(null, addr, bytes, Platform.BYTE_ARRAY_OFFSET, length);
+    UnsafeHolder.copyMemory(null, addr, bytes,
+        UnsafeHolder.BYTE_ARRAY_OFFSET, length);
   }
 
   /**
@@ -113,8 +114,8 @@ public final class UnsafeMemoryChunk implements MemoryChunk {
     assert SimpleMemoryAllocatorImpl.validateAddressAndSizeWithinSlab(addr,
         length + offset);
 
-    Platform.copyMemory(null, addr + offset, bytes,
-        Platform.BYTE_ARRAY_OFFSET + bytesOffset, length);
+    UnsafeHolder.copyMemory(null, addr + offset, bytes,
+        UnsafeHolder.BYTE_ARRAY_OFFSET + bytesOffset, length);
   }
 
   public static byte readAbsoluteByte(long addr) {
@@ -223,8 +224,8 @@ public final class UnsafeMemoryChunk implements MemoryChunk {
     assert SimpleMemoryAllocatorImpl.validateAddressAndSizeWithinSlab(addr,
         size + addrOffset);
 
-    Platform.copyMemory(null, addr + addrOffset, bytes,
-        Platform.BYTE_ARRAY_OFFSET + bytesOffset, size);
+    UnsafeHolder.copyMemory(null, addr + addrOffset, bytes,
+        UnsafeHolder.BYTE_ARRAY_OFFSET + bytesOffset, size);
   }
 
   @Override
@@ -246,7 +247,7 @@ public final class UnsafeMemoryChunk implements MemoryChunk {
     }
     assert SimpleMemoryAllocatorImpl.validateAddressAndSizeWithinSlab(addr, size);
 
-    Platform.copyMemory(bytes, Platform.BYTE_ARRAY_OFFSET + bytesOffset,
+    UnsafeHolder.copyMemory(bytes, UnsafeHolder.BYTE_ARRAY_OFFSET + bytesOffset,
         null, addr, size);
   }
 

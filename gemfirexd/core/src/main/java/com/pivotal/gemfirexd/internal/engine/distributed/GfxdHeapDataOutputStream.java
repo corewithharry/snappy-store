@@ -22,9 +22,9 @@ import java.nio.ByteBuffer;
 import com.gemstone.gemfire.internal.HeapDataOutputStream;
 import com.gemstone.gemfire.internal.ObjToByteArraySerializer;
 import com.gemstone.gemfire.internal.shared.Version;
+import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
 import com.pivotal.gemfirexd.internal.engine.Misc;
 import com.pivotal.gemfirexd.internal.engine.sql.conn.GfxdHeapThresholdListener;
-import org.apache.spark.unsafe.Platform;
 
 /**
  * GfxdHeapDataOutputStream extends {@link HeapDataOutputStream} from which it
@@ -107,8 +107,8 @@ public final class GfxdHeapDataOutputStream extends HeapDataOutputStream
     // copy into as available space first
     final int remainingSpace = buffer.capacity() - pos;
     if (remainingSpace < length) {
-      Platform.copyMemory(src, srcOffset, dst,
-          Platform.BYTE_ARRAY_OFFSET + offset + pos, remainingSpace);
+      UnsafeHolder.copyMemory(src, srcOffset, dst,
+          UnsafeHolder.BYTE_ARRAY_OFFSET + offset + pos, remainingSpace);
       buffer.position(pos + remainingSpace);
       srcOffset += remainingSpace;
       length -= remainingSpace;
@@ -120,8 +120,8 @@ public final class GfxdHeapDataOutputStream extends HeapDataOutputStream
       pos = buffer.position();
     }
     // copy remaining bytes
-    Platform.copyMemory(src, srcOffset, dst,
-        Platform.BYTE_ARRAY_OFFSET + offset + pos, length);
+    UnsafeHolder.copyMemory(src, srcOffset, dst,
+        UnsafeHolder.BYTE_ARRAY_OFFSET + offset + pos, length);
     buffer.position(pos + length);
   }
 

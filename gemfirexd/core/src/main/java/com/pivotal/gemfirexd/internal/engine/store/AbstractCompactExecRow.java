@@ -47,7 +47,6 @@ import com.pivotal.gemfirexd.internal.iapi.sql.execute.ExecRow;
 import com.pivotal.gemfirexd.internal.iapi.types.DataTypeUtilities;
 import com.pivotal.gemfirexd.internal.iapi.types.DataValueDescriptor;
 import com.pivotal.gemfirexd.internal.iapi.types.SQLDecimal;
-import org.apache.spark.unsafe.types.UTF8String;
 
 /**
  * Common behavior for implementations of a compact Row used to minimize the
@@ -1252,9 +1251,6 @@ public abstract class AbstractCompactExecRow extends GfxdDataSerializable
             .getFullSQLTypeName(), cd.getColumnName());
   }
 
-  // TODO: SW: fix to store same full UTF8 format in GemXD like in UTF8String
-  public abstract UTF8String getAsUTF8String(int index)
-      throws StandardException;
   protected abstract String getString(int position, ResultWasNull wasNull)
       throws StandardException;
   protected abstract Object getObject(int position, ResultWasNull wasNull)

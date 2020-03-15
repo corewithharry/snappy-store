@@ -41,7 +41,6 @@ import com.pivotal.gemfirexd.internal.iapi.services.io.FormatableBitSet;
 import com.pivotal.gemfirexd.internal.iapi.sql.execute.ExecRow;
 import com.pivotal.gemfirexd.internal.iapi.types.DataValueDescriptor;
 import com.pivotal.gemfirexd.internal.shared.common.ResolverUtils;
-import org.apache.spark.unsafe.types.UTF8String;
 
 import static com.gemstone.gemfire.internal.offheap.annotations.OffHeapIdentifier.OFFHEAP_COMPACT_EXEC_ROW_SOURCE;
 
@@ -591,24 +590,6 @@ public final class OffHeapCompactExecRow extends AbstractCompactExecRow {
   @Override
   protected final byte[][] getRowByteArraysIfPresent() {
     return null;
-  }
-
-  @Override
-  public UTF8String getAsUTF8String(int index) throws StandardException {
-    final Object source = this.source;
-    if (source != null) {
-      final Class<?> cls = source.getClass();
-      if (cls == OffHeapRow.class) {
-        return this.formatter.getAsUTF8String(index, (OffHeapRow)source);
-      } else if (cls == byte[].class) {
-        return this.formatter.getAsUTF8String(index, (byte[])source);
-      } else {
-        return this.formatter.getAsUTF8String(index,
-            (OffHeapRowWithLobs)source);
-      }
-    } else {
-      return null;
-    }
   }
 
   @Override

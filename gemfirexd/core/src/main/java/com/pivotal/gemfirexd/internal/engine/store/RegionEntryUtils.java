@@ -31,7 +31,6 @@ import com.gemstone.gemfire.cache.EntryExistsException;
 import com.gemstone.gemfire.cache.Region;
 import com.gemstone.gemfire.distributed.DistributedMember;
 import com.gemstone.gemfire.distributed.internal.DistributionConfig;
-import com.gemstone.gemfire.distributed.internal.membership.InternalDistributedMember;
 import com.gemstone.gemfire.internal.Assert;
 import com.gemstone.gemfire.internal.ByteArrayDataInput;
 import com.gemstone.gemfire.internal.DSCODE;
@@ -60,6 +59,7 @@ import com.gemstone.gemfire.internal.offheap.annotations.Retained;
 import com.gemstone.gemfire.internal.offheap.annotations.Unretained;
 import com.gemstone.gemfire.internal.shared.SystemProperties;
 import com.gemstone.gemfire.internal.shared.Version;
+import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
 import com.gemstone.gemfire.internal.size.ReflectionSingleObjectSizer;
 import com.gemstone.gemfire.internal.snappy.CallbackFactoryProvider;
 import com.gemstone.gemfire.internal.util.ArrayUtils;
@@ -98,7 +98,6 @@ import com.pivotal.gemfirexd.internal.impl.sql.catalog.GfxdDataDictionary;
 import com.pivotal.gemfirexd.internal.shared.common.ResolverUtils;
 import com.pivotal.gemfirexd.internal.shared.common.StoredFormatIds;
 import com.pivotal.gemfirexd.internal.shared.common.sanity.SanityManager;
-import org.apache.spark.unsafe.Platform;
 
 public final class RegionEntryUtils {
 
@@ -2940,7 +2939,7 @@ public final class RegionEntryUtils {
       final int endColumnPos = columnPos + columnWidth;
       long rowAddr = memAddr + columnOffset;
       while (columnPos < endColumnPos) {
-        if (columnBytes[columnPos] != Platform.getByte(null, rowAddr)) {
+        if (columnBytes[columnPos] != UnsafeHolder.getUnsafe().getByte(null, rowAddr)) {
           // indicates failure in equality comparison
           return -1;
         }
@@ -2977,7 +2976,7 @@ public final class RegionEntryUtils {
         long rowAddr = memAddr + columnOffset + shorter;
         long rowAddrEnd = rowAddr + (columnWidth - shorter);
         while (rowAddr < rowAddrEnd) {
-          if (Platform.getByte(null, rowAddr) != 0x20) {
+          if (UnsafeHolder.getUnsafe().getByte(null, rowAddr) != 0x20) {
             return -1;
           }
           ++rowAddr;
@@ -3236,7 +3235,8 @@ public final class RegionEntryUtils {
       long rowAddr = memAddr + columnOffset;
       final long rowEndPos = rowAddr + columnWidth;
       while (rowAddr < rowEndPos) {
-        if (Platform.getByte(null, rowAddr) != Platform.getByte(null, columnAddr)) {
+        if (UnsafeHolder.getUnsafe().getByte(null, rowAddr) !=
+            UnsafeHolder.getUnsafe().getByte(null, columnAddr)) {
           return -1;
         }
         rowAddr++;
@@ -3260,7 +3260,7 @@ public final class RegionEntryUtils {
         final long targetEndPos = targetColumnAddr + targetWidth;
         targetColumnAddr += shorter;
         while (targetColumnAddr < targetEndPos) {
-          if (Platform.getByte(null, targetColumnAddr) != 0x20) {
+          if (UnsafeHolder.getUnsafe().getByte(null, targetColumnAddr) != 0x20) {
             return -1;
           }
           targetColumnAddr++;
@@ -3269,7 +3269,7 @@ public final class RegionEntryUtils {
           long rowColumnAddr = memAddr + columnOffset + shorter;
           final long rowColumnEnd = rowColumnAddr + columnWidth - shorter;
           while (rowColumnAddr < rowColumnEnd) {
-            if (Platform.getByte(null, rowColumnAddr) != 0x20) {
+            if (UnsafeHolder.getUnsafe().getByte(null, rowColumnAddr) != 0x20) {
               return -1;
             }
             rowColumnAddr++;

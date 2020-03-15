@@ -42,6 +42,7 @@ package com.pivotal.gemfirexd.internal.iapi.types;
 
 import com.gemstone.gemfire.internal.DSCODE;
 import com.gemstone.gemfire.internal.offheap.ByteSource;
+import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
 import com.gemstone.gemfire.pdx.internal.unsafe.UnsafeWrapper;
 import com.pivotal.gemfirexd.internal.iapi.error.StandardException;
 import com.pivotal.gemfirexd.internal.iapi.reference.SQLState;
@@ -51,7 +52,6 @@ import com.pivotal.gemfirexd.internal.iapi.services.io.Storable;
 import com.pivotal.gemfirexd.internal.iapi.services.sanity.SanityManager;
 import com.pivotal.gemfirexd.internal.shared.common.ResolverUtils;
 import com.pivotal.gemfirexd.internal.shared.common.StoredFormatIds;
-import org.apache.spark.unsafe.Platform;
 
 import java.io.DataInput;
 import java.io.DataOutput;
@@ -1236,7 +1236,7 @@ public final class SQLBoolean
   @Override
   public int readBytes(long memOffset, final int columnWidth, ByteSource bs) {
     assert columnWidth == 1: columnWidth;
-    this.value = (Platform.getByte(null, memOffset) == 1);
+    this.value = (UnsafeHolder.getUnsafe().getByte(null, memOffset) == 1);
     this.isnull = false;
     return 1;
   }

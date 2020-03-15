@@ -49,6 +49,7 @@ import java.util.List;
 import java.util.Map;
 
 import com.gemstone.gemfire.internal.shared.ClientSharedUtils;
+import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
 import com.pivotal.gemfirexd.internal.shared.common.ResolverUtils;
 import io.snappydata.thrift.BlobChunk;
 import io.snappydata.thrift.ClobChunk;
@@ -56,7 +57,6 @@ import io.snappydata.thrift.ColumnDescriptor;
 import io.snappydata.thrift.ColumnValue;
 import io.snappydata.thrift.Decimal;
 import io.snappydata.thrift.SnappyType;
-import org.apache.spark.unsafe.Platform;
 import org.apache.thrift.TBaseHelper;
 import org.apache.thrift.TException;
 import org.apache.thrift.protocol.TField;
@@ -215,9 +215,9 @@ public class OptimizedElementArray {
 
   private void setDefaultNullability() {
     final long[] primitives = this.primitives;
-    final int end = Platform.LONG_ARRAY_OFFSET + size();
-    for (int offset = Platform.LONG_ARRAY_OFFSET; offset < end; offset++) {
-      final byte snappyType = Platform.getByte(primitives, offset);
+    final long end = UnsafeHolder.LONG_ARRAY_OFFSET + size();
+    for (long offset = UnsafeHolder.LONG_ARRAY_OFFSET; offset < end; offset++) {
+      final byte snappyType = UnsafeHolder.getUnsafe().getByte(primitives, offset);
       switch (Math.abs(snappyType)) {
         case 4: // INTEGER
         case 5: // BIGINT
@@ -232,21 +232,21 @@ public class OptimizedElementArray {
         case 24: // NULLTYPE
           // primitives must be marked non-null
           if (snappyType < 0) {
-            Platform.putByte(primitives, offset, (byte)-snappyType);
+            UnsafeHolder.getUnsafe().putByte(primitives, offset, (byte)-snappyType);
           }
           break;
         default:
           // non-primitives must be marked null
           if (snappyType > 0) {
-            Platform.putByte(primitives, offset, (byte)-snappyType);
+            UnsafeHolder.getUnsafe().putByte(primitives, offset, (byte)-snappyType);
           }
       }
     }
   }
 
   public final void setType(int index, int snappyType) {
-    Platform.putByte(this.primitives, Platform.LONG_ARRAY_OFFSET + index,
-        (byte)snappyType);
+    UnsafeHolder.getUnsafe().putByte(this.primitives,
+        UnsafeHolder.LONG_ARRAY_OFFSET + (long)index, (byte)snappyType);
   }
 
   /**
@@ -256,7 +256,8 @@ public class OptimizedElementArray {
    * @param index 0-based index of the column
    */
   public final int getType(int index) {
-    return Platform.getByte(primitives, Platform.LONG_ARRAY_OFFSET + index);
+    return UnsafeHolder.getUnsafe().getByte(primitives,
+        UnsafeHolder.LONG_ARRAY_OFFSET + (long)index);
   }
 
   public final boolean isNull(int index) {

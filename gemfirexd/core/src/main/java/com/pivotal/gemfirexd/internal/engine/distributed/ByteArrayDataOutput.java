@@ -23,8 +23,8 @@ import javax.annotation.Nonnull;
 
 import com.gemstone.gemfire.internal.shared.ClientSharedUtils;
 import com.gemstone.gemfire.internal.shared.unsafe.ChannelBufferUnsafeDataOutputStream;
+import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
 import com.pivotal.gemfirexd.internal.shared.common.ResolverUtils;
-import org.apache.spark.unsafe.Platform;
 
 /**
  * An expanding byte[] based DataOutputStream. Best used as intermediate buffer
@@ -177,7 +177,7 @@ public final class ByteArrayDataOutput extends ByteArrayOutput implements
       ensureCapacity(2 + utfLen, this.bufferPos);
       writeShort(utfLen);
       ChannelBufferUnsafeDataOutputStream.writeUTFSegmentNoOverflow(str, 0,
-          strLen, utfLen, this.buffer, Platform.BYTE_ARRAY_OFFSET + bufferPos);
+          strLen, utfLen, this.buffer, UnsafeHolder.BYTE_ARRAY_OFFSET + bufferPos);
       this.bufferPos += utfLen;
     } else {
       throw new UTFDataFormatException("ByteArrayDataOutput#writeUTF: "

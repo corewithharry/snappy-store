@@ -70,11 +70,11 @@ import javax.naming.directory.DirContext;
 import javax.naming.directory.InitialDirContext;
 
 import com.gemstone.gemfire.internal.shared.unsafe.DirectBufferAllocator;
+import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
 import org.apache.log4j.Appender;
 import org.apache.log4j.FileAppender;
 import org.apache.log4j.LogManager;
 import org.apache.log4j.PropertyConfigurator;
-import org.apache.spark.unsafe.Platform;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -1948,16 +1948,17 @@ public abstract class ClientSharedUtils {
       return false;
     }
     // read in longs to minimize ByteBuffer get() calls
+    final sun.misc.Unsafe unsafe = UnsafeHolder.getUnsafe();
     int pos = buffer.position();
     final int endPos = (pos + len);
     final boolean sameOrder = ByteOrder.nativeOrder() == buffer.order();
     // round off to nearest factor of 8 to read in longs
     final int endRound8Pos = (len % 8) != 0 ? (endPos - 8) : endPos;
-    long indexPos = Platform.BYTE_ARRAY_OFFSET;
+    long indexPos = UnsafeHolder.BYTE_ARRAY_OFFSET;
     while (pos < endRound8Pos) {
       // splitting into longs is faster than reading one byte at a time even
       // though it costs more operations (about 20% in micro-benchmarks)
-      final long s = Platform.getLong(bytes, indexPos);
+      final long s = unsafe.getLong(bytes, indexPos);
       final long v = buffer.getLong(pos);
       if (sameOrder) {
         if (s != v) {
@@ -1970,7 +1971,7 @@ public abstract class ClientSharedUtils {
       indexPos += 8;
     }
     while (pos < endPos) {
-      if (Platform.getByte(bytes, indexPos) != buffer.get(pos)) {
+      if (unsafe.getByte(bytes, indexPos) != buffer.get(pos)) {
         return false;
       }
       pos++;

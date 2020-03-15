@@ -22,13 +22,19 @@ import java.nio.ByteBuffer;
 import com.gemstone.gemfire.internal.shared.unsafe.DirectBufferAllocator;
 import com.gemstone.gemfire.internal.shared.unsafe.FreeMemory;
 import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
-import org.apache.spark.unsafe.Platform;
-import org.apache.spark.unsafe.memory.MemoryAllocator;
 
 /**
  * Allocate, release and expand ByteBuffers (in-place if possible).
  */
 public abstract class BufferAllocator implements Closeable {
+
+  public static final boolean MEMORY_DEBUG_FILL_ENABLED = Boolean.parseBoolean(
+      System.getProperty("spark.memory.debugFill", "false"));
+
+  // Same as jemalloc's debug fill values.
+  public static final byte MEMORY_DEBUG_FILL_CLEAN_VALUE = (byte)0xa5;
+  // @SuppressWarnings("WeakerAccess")
+  public static final byte MEMORY_DEBUG_FILL_FREED_VALUE = (byte)0x5a;
 
   public static final String STORE_DATA_FRAME_OUTPUT =
       "STORE_DATA_FRAME_OUTPUT";
@@ -66,8 +72,8 @@ public abstract class BufferAllocator implements Closeable {
    * Fill the given portion of the buffer setting it with given byte.
    */
   public final void fill(ByteBuffer buffer, byte b, int position, int numBytes) {
-    Platform.setMemory(baseObject(buffer), baseOffset(buffer) + position,
-        numBytes, b);
+    UnsafeHolder.getUnsafe().setMemory(baseObject(buffer),
+        baseOffset(buffer) + position, numBytes, b);
   }
 
   /**
@@ -142,18 +148,18 @@ public abstract class BufferAllocator implements Closeable {
    */
   public static boolean releaseBuffer(ByteBuffer buffer) {
     final boolean hasArray = buffer.hasArray();
-    if (MemoryAllocator.MEMORY_DEBUG_FILL_ENABLED) {
+    if (MEMORY_DEBUG_FILL_ENABLED) {
       Object baseObject;
       long baseOffset;
       if (hasArray) {
         baseObject = buffer.array();
-        baseOffset = Platform.BYTE_ARRAY_OFFSET + buffer.arrayOffset();
+        baseOffset = UnsafeHolder.BYTE_ARRAY_OFFSET + buffer.arrayOffset();
       } else {
         baseObject = null;
         baseOffset = UnsafeHolder.getDirectBufferAddress(buffer);
       }
-      Platform.setMemory(baseObject, baseOffset, buffer.capacity(),
-          MemoryAllocator.MEMORY_DEBUG_FILL_FREED_VALUE);
+      UnsafeHolder.getUnsafe().setMemory(baseObject, baseOffset, buffer.capacity(),
+          MEMORY_DEBUG_FILL_FREED_VALUE);
     }
     // Actual release should depend on buffer type and not allocator type.
     // Reserved off-heap space will be decremented by FreeMemory implementation.

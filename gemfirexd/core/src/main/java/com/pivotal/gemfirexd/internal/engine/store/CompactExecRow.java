@@ -33,7 +33,6 @@ import com.pivotal.gemfirexd.internal.iapi.error.StandardException;
 import com.pivotal.gemfirexd.internal.iapi.services.io.FormatableBitSet;
 import com.pivotal.gemfirexd.internal.iapi.sql.execute.ExecRow;
 import com.pivotal.gemfirexd.internal.iapi.types.DataValueDescriptor;
-import org.apache.spark.unsafe.types.UTF8String;
 
 /**
  * A compact implementation of Row used to minimize the footprint of a row and
@@ -365,11 +364,6 @@ public final class CompactExecRow extends AbstractCompactExecRow {
   @Override
   protected final byte[][] getRowByteArraysIfPresent() {
     return null;
-  }
-
-  @Override
-  public UTF8String getAsUTF8String(int index) throws StandardException {
-    return this.formatter.getAsUTF8String(index, this.source);
   }
 
   @Override

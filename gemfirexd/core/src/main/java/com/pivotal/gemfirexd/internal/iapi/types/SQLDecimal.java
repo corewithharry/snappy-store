@@ -46,6 +46,7 @@ import com.gemstone.gemfire.internal.cache.LocalRegion;
 import com.gemstone.gemfire.internal.offheap.ByteSource;
 import com.gemstone.gemfire.internal.offheap.UnsafeMemoryChunk;
 import com.gemstone.gemfire.internal.shared.ClientSharedUtils;
+import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
 import com.gemstone.gemfire.pdx.internal.unsafe.UnsafeWrapper;
 import com.pivotal.gemfirexd.internal.engine.distributed.ByteArrayDataOutput;
 import com.pivotal.gemfirexd.internal.iapi.error.StandardException;
@@ -57,7 +58,6 @@ import com.pivotal.gemfirexd.internal.iapi.services.io.Storable;
 import com.pivotal.gemfirexd.internal.iapi.services.sanity.SanityManager;
 import com.pivotal.gemfirexd.internal.shared.common.ResolverUtils;
 import com.pivotal.gemfirexd.internal.shared.common.StoredFormatIds;
-import org.apache.spark.unsafe.Platform;
 
 import java.math.BigDecimal;
 import java.math.BigInteger;
@@ -1831,8 +1831,8 @@ public final class SQLDecimal extends NumberDataType implements VariableSizeData
     // clear the previous value to ensure that the rawData value will be used
     this.value = null;
     this.rawData = new byte[numBytes];
-    this.rawScale = Platform.getByte(null, memOffset++);
-    this.rawSig = Platform.getByte(null, memOffset++);
+    this.rawScale = UnsafeHolder.getUnsafe().getByte(null, memOffset++);
+    this.rawSig = UnsafeHolder.getUnsafe().getByte(null, memOffset++);
     UnsafeMemoryChunk.readUnsafeBytes(memOffset, this.rawData, numBytes);
     assert ((int)this.rawSig) == 0 || ((int)this.rawSig) == -1
         || ((int)this.rawSig) == 1: ((int)this.rawSig) + " byte=" + this.rawSig;
@@ -1892,8 +1892,8 @@ public final class SQLDecimal extends NumberDataType implements VariableSizeData
 
   static final BigDecimal getAsBigDecimal(long memOffset, final int columnWidth) {
     final int scale, signum;
-    scale = Platform.getByte(null, memOffset++);
-    signum = Platform.getByte(null, memOffset++);
+    scale = UnsafeHolder.getUnsafe().getByte(null, memOffset++);
+    signum = UnsafeHolder.getUnsafe().getByte(null, memOffset++);
     // we need to create intermediate byte[] since the package private
     // constructor of BigInteger that directly takes int[] is only available
     // in Sun JDK >= 1.6.0_20

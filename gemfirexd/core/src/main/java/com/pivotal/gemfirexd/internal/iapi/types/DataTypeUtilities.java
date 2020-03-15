@@ -60,8 +60,6 @@ import com.pivotal.gemfirexd.internal.iapi.reference.JDBC40Translation;
 import com.pivotal.gemfirexd.internal.iapi.reference.SQLState;
 import com.pivotal.gemfirexd.internal.iapi.sql.dictionary.ColumnDescriptor;
 import com.pivotal.gemfirexd.internal.shared.common.StoredFormatIds;
-import org.apache.spark.unsafe.Platform;
-import org.apache.spark.unsafe.types.UTF8String;
 
 /**
  * A set of static utility methods for data types.
@@ -268,51 +266,6 @@ public abstract class DataTypeUtilities {
   }
 
 // GemStone changes BEGIN
-
-  /**
-   * Extract the given column from raw bytes as a UTF8String.
-   */
-  public static UTF8String getAsUTF8String(final byte[] inBytes,
-      final int offset, final int columnWidth, final ColumnDescriptor cd)
-      throws StandardException {
-
-    final DataTypeDescriptor dtd = cd.columnType;
-    final int formatID = dtd.getTypeId().getTypeFormatId();
-    switch (formatID) {
-      case StoredFormatIds.CHAR_TYPE_ID:
-      case StoredFormatIds.LONGVARCHAR_TYPE_ID:
-      case StoredFormatIds.VARCHAR_TYPE_ID:
-      case StoredFormatIds.CLOB_TYPE_ID:
-        // TODO: SW: change format in SQLChar to be full UTF8
-        // and below is broken for > 3-character UTF8 strings
-        return UTF8String.fromAddress(inBytes,
-            Platform.BYTE_ARRAY_OFFSET + offset, columnWidth);
-      default:
-        throw StandardException.newException(SQLState.LANG_FORMAT_EXCEPTION,
-            "UTF8String", cd.getColumnName());
-    }
-  }
-
-  /**
-   * Extract the given column from raw bytes as a UTF8String.
-   */
-  public static UTF8String getAsUTF8String(final long memOffset,
-      final int columnWidth, final ColumnDescriptor cd)
-      throws StandardException {
-
-    final DataTypeDescriptor dtd = cd.columnType;
-    final int formatID = dtd.getTypeId().getTypeFormatId();
-    switch (formatID) {
-      case StoredFormatIds.CHAR_TYPE_ID:
-      case StoredFormatIds.LONGVARCHAR_TYPE_ID:
-      case StoredFormatIds.VARCHAR_TYPE_ID:
-      case StoredFormatIds.CLOB_TYPE_ID:
-        return UTF8String.fromAddress(null, memOffset, columnWidth);
-      default:
-        throw StandardException.newException(SQLState.LANG_FORMAT_EXCEPTION,
-            "UTF8String", cd.getColumnName());
-    }
-  }
 
   /**
    * Extract the given column from raw bytes as a string.

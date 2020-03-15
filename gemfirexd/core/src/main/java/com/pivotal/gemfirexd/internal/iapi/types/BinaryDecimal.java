@@ -53,6 +53,7 @@ import java.sql.Types;
 import com.gemstone.gemfire.DataSerializer;
 import com.gemstone.gemfire.internal.offheap.ByteSource;
 import com.gemstone.gemfire.internal.offheap.UnsafeMemoryChunk;
+import com.gemstone.gemfire.internal.shared.unsafe.UnsafeHolder;
 // GemStone changes END
 import com.pivotal.gemfirexd.internal.iapi.error.StandardException;
 import com.pivotal.gemfirexd.internal.iapi.reference.SQLState;
@@ -60,7 +61,6 @@ import com.pivotal.gemfirexd.internal.iapi.services.io.ArrayInputStream;
 import com.pivotal.gemfirexd.internal.iapi.services.sanity.SanityManager;
 import com.pivotal.gemfirexd.internal.shared.common.ResolverUtils;
 import com.pivotal.gemfirexd.internal.shared.common.StoredFormatIds;
-import org.apache.spark.unsafe.Platform;
 
 /**
  * SQL DECIMAL using raw data. Provides the basis for the
@@ -688,7 +688,7 @@ return divide(dividend, divisor, result, -1);
         public int readBytes(long memOffset, int columnWidth, ByteSource bs) {
           final int numBytes = columnWidth - 1;
           this.data2c = new byte[numBytes];
-          this.sqlScale = Platform.getByte(null, memOffset++);
+          this.sqlScale = UnsafeHolder.getUnsafe().getByte(null, memOffset++);
           UnsafeMemoryChunk.readUnsafeBytes(memOffset, this.data2c, numBytes);
           return columnWidth;
         }

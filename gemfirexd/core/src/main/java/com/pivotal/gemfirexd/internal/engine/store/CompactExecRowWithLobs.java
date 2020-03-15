@@ -38,7 +38,6 @@ import com.pivotal.gemfirexd.internal.iapi.sql.dictionary.ColumnDescriptor;
 import com.pivotal.gemfirexd.internal.iapi.sql.execute.ExecRow;
 import com.pivotal.gemfirexd.internal.iapi.types.DataValueDescriptor;
 import com.pivotal.gemfirexd.internal.shared.common.ResolverUtils;
-import org.apache.spark.unsafe.types.UTF8String;
 
 /**
  * A compact implementation of Row that contains one or more LOBs (i.e. BLOBs or
@@ -172,11 +171,6 @@ public final class CompactExecRowWithLobs extends AbstractCompactExecRow {
     else {
       return this.source;
     }
-  }
-
-  @Override
-  public UTF8String getAsUTF8String(int index) throws StandardException {
-    return this.formatter.getAsUTF8String(index, this.source);
   }
 
   @Override

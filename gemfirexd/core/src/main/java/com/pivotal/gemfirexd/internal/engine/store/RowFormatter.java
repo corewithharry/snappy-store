@@ -62,8 +62,6 @@ import com.pivotal.gemfirexd.internal.impl.sql.GenericColumnDescriptor;
 import com.pivotal.gemfirexd.internal.shared.common.ResolverUtils;
 import com.pivotal.gemfirexd.internal.shared.common.StoredFormatIds;
 import com.pivotal.gemfirexd.internal.shared.common.sanity.SanityManager;
-import org.apache.spark.unsafe.Platform;
-import org.apache.spark.unsafe.types.UTF8String;
 
 /**
  * A RowFormatter translates between byte[] (and byte[][]) storage
@@ -179,7 +177,7 @@ public final class RowFormatter implements Serializable {
   /**
    * Number of bytes required for serializing {@link #TOKEN_RECOVERY_VERSION}.
    */
-  static final int TOKEN_RECOVERY_VERSION_BYTES = getCompactIntNumBytes(
+  private static final int TOKEN_RECOVERY_VERSION_BYTES = getCompactIntNumBytes(
       TOKEN_RECOVERY_VERSION);
 
   /**
@@ -206,7 +204,7 @@ public final class RowFormatter implements Serializable {
    * <p>
    * Default value: offset is minimum -ve value possible in the offset bytes
    */
-  int[] positionMap;
+  public int[] positionMap;
 
   /**
    * The {@link ColumnDescriptor}'s for this row that avoids having to go to
@@ -661,7 +659,7 @@ public final class RowFormatter implements Serializable {
   private static int trimTrailingSpaces(
       final long memAddress, final int columnOffset, int columnWidth) {
     long memOffset = memAddress + columnOffset + columnWidth - 1;
-    while (columnWidth > 0 && Platform.getByte(null, memOffset) == 0x20) {
+    while (columnWidth > 0 && UnsafeHolder.getUnsafe().getByte(null, memOffset) == 0x20) {
       memOffset--;
       columnWidth--;
     }
@@ -675,17 +673,18 @@ public final class RowFormatter implements Serializable {
    *
    * @return the number of bytes written.
    */
-  public static int writeInt(final byte[] bytes, int intValue, int offset) {
+  public static int writeInt(final byte[] bytes, int intValue, long offset) {
     assert bytes != null;
 
     // serialize in big-endian format to be compatible with DataOutput.writeInt
     // and also SQLInteger.computeHashCode
     if (UnsafeHolder.littleEndian) {
-      Platform.putInt(bytes, offset + Platform.BYTE_ARRAY_OFFSET,
-          Integer.reverseBytes(intValue));
+      UnsafeHolder.getUnsafe().putInt(bytes,
+          offset + UnsafeHolder.BYTE_ARRAY_OFFSET, Integer.reverseBytes(intValue));
       return 4; // bytes in int (= Integer.SIZE / 8);
     } else {
-      Platform.putInt(bytes, offset + Platform.BYTE_ARRAY_OFFSET, intValue);
+      UnsafeHolder.getUnsafe().putInt(bytes,
+          offset + UnsafeHolder.BYTE_ARRAY_OFFSET, intValue);
       return 4; // bytes in int (= Integer.SIZE / 8);
     }
   }
@@ -846,20 +845,20 @@ public final class RowFormatter implements Serializable {
    */
   public static short readShort(final long memOffset) {
     if (UnsafeHolder.littleEndian) {
-      return Short.reverseBytes(Platform.getShort(null, memOffset));
+      return Short.reverseBytes(UnsafeHolder.getUnsafe().getShort(null, memOffset));
     } else {
-      return Platform.getShort(null, memOffset);
+      return UnsafeHolder.getUnsafe().getShort(null, memOffset);
     }
   }
 
-  public static short readShort(final byte[] bytes, int offset) {
+  public static short readShort(final byte[] bytes, long offset) {
     assert bytes != null;
 
     if (UnsafeHolder.littleEndian) {
-      return Short.reverseBytes(Platform.getShort(bytes,
-          offset + Platform.BYTE_ARRAY_OFFSET));
+      return Short.reverseBytes(UnsafeHolder.getUnsafe().getShort(bytes,
+          offset + UnsafeHolder.BYTE_ARRAY_OFFSET));
     } else {
-      return Platform.getShort(bytes, offset + Platform.BYTE_ARRAY_OFFSET);
+      return UnsafeHolder.getUnsafe().getShort(bytes, offset + UnsafeHolder.BYTE_ARRAY_OFFSET);
     }
   }
 
@@ -870,20 +869,21 @@ public final class RowFormatter implements Serializable {
    */
   public static int readInt(final long memOffset) {
     if (UnsafeHolder.littleEndian) {
-      return Integer.reverseBytes(Platform.getInt(null, memOffset));
+      return Integer.reverseBytes(UnsafeHolder.getUnsafe().getInt(null, memOffset));
     } else {
-      return Platform.getInt(null, memOffset);
+      return UnsafeHolder.getUnsafe().getInt(null, memOffset);
     }
   }
 
-  public static int readInt(final byte[] bytes, int offset) {
+  public static int readInt(final byte[] bytes, long offset) {
     assert bytes != null;
 
     if (UnsafeHolder.littleEndian) {
-      return Integer.reverseBytes(Platform.getInt(bytes,
-          offset + Platform.BYTE_ARRAY_OFFSET));
+      return Integer.reverseBytes(UnsafeHolder.getUnsafe().getInt(bytes,
+          offset + UnsafeHolder.BYTE_ARRAY_OFFSET));
     } else {
-      return Platform.getInt(bytes, offset + Platform.BYTE_ARRAY_OFFSET);
+      return UnsafeHolder.getUnsafe().getInt(bytes,
+          offset + UnsafeHolder.BYTE_ARRAY_OFFSET);
     }
   }
 
@@ -894,7 +894,7 @@ public final class RowFormatter implements Serializable {
     int shift = 0;
     long result = 0;
     while (shift < 64) {
-      final byte b = Platform.getByte(null, memAddr);
+      final byte b = UnsafeHolder.getUnsafe().getByte(null, memAddr);
       result |= (long)(b & 0x7F) << shift;
       if ((b & 0x80) == 0) {
         return (int)InternalDataSerializer.decodeZigZag64(result);
@@ -925,17 +925,18 @@ public final class RowFormatter implements Serializable {
    *
    * @return the number of bytes written.
    */
-  public static int writeLong(final byte[] bytes, long longValue, int offset) {
+  public static int writeLong(final byte[] bytes, long longValue, long offset) {
     assert bytes != null;
 
     // serialize in big-endian format to be compatible with DataOutput.writeInt
     // and also SQLInteger.computeHashCode
     if (UnsafeHolder.littleEndian) {
-      Platform.putLong(bytes, offset + Platform.BYTE_ARRAY_OFFSET,
-          Long.reverseBytes(longValue));
+      UnsafeHolder.getUnsafe().putLong(bytes,
+          offset + UnsafeHolder.BYTE_ARRAY_OFFSET, Long.reverseBytes(longValue));
       return 8; // bytes in long (= Long.SIZE / 8);
     } else {
-      Platform.putLong(bytes, offset + Platform.BYTE_ARRAY_OFFSET, longValue);
+      UnsafeHolder.getUnsafe().putLong(bytes,
+          offset + UnsafeHolder.BYTE_ARRAY_OFFSET, longValue);
       return 8; // bytes in long (= Long.SIZE / 8);
     }
   }
@@ -947,20 +948,21 @@ public final class RowFormatter implements Serializable {
    */
   public static long readLong(final long memOffset) {
     if (UnsafeHolder.littleEndian) {
-      return Long.reverseBytes(Platform.getLong(null, memOffset));
+      return Long.reverseBytes(UnsafeHolder.getUnsafe().getLong(null, memOffset));
     } else {
-      return Platform.getLong(null, memOffset);
+      return UnsafeHolder.getUnsafe().getLong(null, memOffset);
     }
   }
 
-  public static long readLong(final byte[] bytes, int offset) {
+  public static long readLong(final byte[] bytes, long offset) {
     assert bytes != null;
 
     if (UnsafeHolder.littleEndian) {
-      return Long.reverseBytes(Platform.getLong(bytes,
-          offset + Platform.BYTE_ARRAY_OFFSET));
+      return Long.reverseBytes(UnsafeHolder.getUnsafe().getLong(bytes,
+          offset + UnsafeHolder.BYTE_ARRAY_OFFSET));
     } else {
-      return Platform.getLong(bytes, offset + Platform.BYTE_ARRAY_OFFSET);
+      return UnsafeHolder.getUnsafe().getLong(bytes,
+          offset + UnsafeHolder.BYTE_ARRAY_OFFSET);
     }
   }
 
@@ -8175,116 +8177,6 @@ public final class RowFormatter implements Serializable {
 
   /////////////////// PACKAGE VISIBLE METHODS ///////////////////
 
-  final UTF8String getAsUTF8String(final int index,
-      final byte[] bytes) throws StandardException {
-    final ColumnDescriptor cd = this.columns[index];
-    final int offsetFromMap = this.positionMap[index];
-    final long offsetAndWidth = getOffsetAndWidth(index, bytes,
-        offsetFromMap, cd, false);
-    if (offsetAndWidth >= 0) {
-      final int columnWidth = (int)offsetAndWidth;
-      final int offset = (int)(offsetAndWidth >>> Integer.SIZE);
-      return DataTypeUtilities.getAsUTF8String(bytes, offset, columnWidth, cd);
-    } else {
-      assert offsetAndWidth == OFFSET_AND_WIDTH_IS_NULL
-          || offsetAndWidth == OFFSET_AND_WIDTH_IS_DEFAULT : offsetAndWidth;
-      if (offsetAndWidth == OFFSET_AND_WIDTH_IS_NULL) {
-        return null;
-      } else {
-        final byte[] defaultBytes = cd.columnDefaultBytes;
-        if (defaultBytes != null) {
-          return UTF8String.fromAddress(defaultBytes,
-              Platform.BYTE_ARRAY_OFFSET, defaultBytes.length);
-        } else {
-          return null;
-        }
-      }
-    }
-  }
-
-  final UTF8String getAsUTF8String(final int index,
-      final byte[][] byteArrays) throws StandardException {
-    final ColumnDescriptor cd = this.columns[index];
-    if (!cd.isLob) {
-      return getAsUTF8String(index, byteArrays[0]);
-    } else {
-      final int offsetFromMap = this.positionMap[index];
-      final byte[] bytes = offsetFromMap != 0 ? byteArrays[offsetFromMap]
-          : cd.columnDefaultBytes;
-      if (bytes != null) {
-        return DataTypeUtilities.getAsUTF8String(bytes, 0, bytes.length, cd);
-      } else {
-        return null;
-      }
-    }
-  }
-
-  private UTF8String getAsUTF8String(final int index,
-      final UnsafeWrapper unsafe, final long memAddr,
-      final int bytesLen) throws StandardException {
-    final ColumnDescriptor cd = this.columns[index];
-    final int offsetFromMap = this.positionMap[index];
-    final long offsetAndWidth = getOffsetAndWidth(index, unsafe, memAddr,
-        bytesLen, offsetFromMap, cd);
-    if (offsetAndWidth >= 0) {
-      final int columnWidth = (int)offsetAndWidth;
-      final int offset = (int)(offsetAndWidth >>> Integer.SIZE);
-      return DataTypeUtilities.getAsUTF8String(memAddr + offset,
-          columnWidth, cd);
-    } else {
-      assert offsetAndWidth == OFFSET_AND_WIDTH_IS_NULL
-          || offsetAndWidth == OFFSET_AND_WIDTH_IS_DEFAULT : offsetAndWidth;
-      if (offsetAndWidth == OFFSET_AND_WIDTH_IS_NULL) {
-        return null;
-      } else {
-        final byte[] defaultBytes = cd.columnDefaultBytes;
-        if (defaultBytes != null) {
-          return UTF8String.fromAddress(defaultBytes,
-              Platform.BYTE_ARRAY_OFFSET, defaultBytes.length);
-        } else {
-          return null;
-        }
-      }
-    }
-  }
-
-  final UTF8String getAsUTF8String(final int index,
-      @Unretained final OffHeapRow bytes) throws StandardException {
-    final UnsafeWrapper unsafe = UnsafeMemoryChunk.getUnsafeWrapper();
-    final int bytesLen = bytes.getLength();
-    final long memAddr = bytes.getUnsafeAddress(0, bytesLen);
-    return getAsUTF8String(index, unsafe, memAddr, bytesLen);
-  }
-
-  final UTF8String getAsUTF8String(final int index,
-      @Unretained final OffHeapRowWithLobs byteArrays)
-      throws StandardException {
-    final ColumnDescriptor cd = this.columns[index];
-    if (!cd.isLob) {
-      final UnsafeWrapper unsafe = UnsafeMemoryChunk.getUnsafeWrapper();
-      final int bytesLen = byteArrays.getLength();
-      final long memAddr = byteArrays.getUnsafeAddress(0, bytesLen);
-      return getAsUTF8String(index, unsafe, memAddr, bytesLen);
-    } else {
-      final int offsetFromMap = this.positionMap[index];
-      final Object lob = offsetFromMap != 0 ? byteArrays
-          .getGfxdByteSource(offsetFromMap) : cd.columnDefaultBytes;
-      if (lob != null) {
-        if (lob instanceof byte[]) {
-          final byte[] bytes = (byte[])lob;
-          return DataTypeUtilities.getAsUTF8String(bytes, 0, bytes.length, cd);
-        } else {
-          final OffHeapByteSource bs = (OffHeapByteSource)lob;
-          final int bytesLen = bs.getLength();
-          final long memAddr = bs.getUnsafeAddress(0, bytesLen);
-          return DataTypeUtilities.getAsUTF8String(memAddr, bytesLen, cd);
-        }
-      } else {
-        return null;
-      }
-    }
-  }
-
   final String getAsString(final int index, final ColumnDescriptor cd,
       final byte[] bytes, final ResultWasNull wasNull) throws StandardException {
     final int offsetFromMap = this.positionMap[index];
@@ -10452,7 +10344,7 @@ public final class RowFormatter implements Serializable {
    *
    * @return returns a long containing the offset and column width
    */
-  final long getOffsetAndWidth(final int index, final byte[] bytes,
+  public final long getOffsetAndWidth(final int index, final byte[] bytes,
       final int offsetFromMap, final ColumnDescriptor cd,
       final boolean truncateSpaces) {
     if (SanityManager.DEBUG) {
@@ -10545,7 +10437,7 @@ public final class RowFormatter implements Serializable {
    *
    * @return returns a long containing the offset and column width
    */
-  final long getOffsetAndWidth(final int index, final UnsafeWrapper unsafe,
+  public final long getOffsetAndWidth(final int index, final UnsafeWrapper unsafe,
       final long memAddr, final int bytesLen, final int offsetFromMap,
       final ColumnDescriptor cd, final boolean truncateSpaces) {
     if (SanityManager.DEBUG) {

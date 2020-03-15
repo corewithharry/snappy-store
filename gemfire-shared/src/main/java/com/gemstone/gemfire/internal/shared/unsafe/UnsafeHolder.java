@@ -32,7 +32,24 @@
  * permissions and limitations under the License. See accompanying
  * LICENSE file.
  */
-
+/*
+ * Portions adapted from Apache Spark having license below.
+ *
+ * Licensed to the Apache Software Foundation (ASF) under one or more
+ * contributor license agreements.  See the NOTICE file distributed with
+ * this work for additional information regarding copyright ownership.
+ * The ASF licenses this file to You under the Apache License, Version 2.0
+ * (the "License"); you may not use this file except in compliance with
+ * the License.  You may obtain a copy of the License at
+ *
+ *    http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.gemstone.gemfire.internal.shared.unsafe;
 
 import java.io.IOException;
@@ -54,7 +71,6 @@ import com.gemstone.gemfire.internal.shared.ChannelBufferInputStream;
 import com.gemstone.gemfire.internal.shared.ChannelBufferOutputStream;
 import com.gemstone.gemfire.internal.shared.InputStreamChannel;
 import com.gemstone.gemfire.internal.shared.OutputStreamChannel;
-import org.apache.spark.unsafe.Platform;
 
 /**
  * Holder for static sun.misc.Unsafe instance and some convenience methods. Use
@@ -163,6 +179,15 @@ public abstract class UnsafeHolder {
     }
   }
 
+  /**
+   * Limits the number of bytes to copy per sun.misc.Unsafe.copyMemory to
+   * allow safepoint polling during a large copy.
+   */
+  private static final long UNSAFE_COPY_THRESHOLD = 1024L * 1024L;
+
+  public static final int BYTE_ARRAY_OFFSET;
+  public static final int LONG_ARRAY_OFFSET;
+
   private static final boolean hasUnsafe;
   // Limit to the chunk copied per Unsafe.copyMemory call to allow for
   // safepoint polling by JVM.
@@ -179,6 +204,13 @@ public abstract class UnsafeHolder {
       v = false;
     }
     hasUnsafe = v;
+    if (hasUnsafe) {
+      BYTE_ARRAY_OFFSET = getUnsafe().arrayBaseOffset(byte[].class);
+      LONG_ARRAY_OFFSET = getUnsafe().arrayBaseOffset(long[].class);
+    } else {
+      BYTE_ARRAY_OFFSET = 0;
+      LONG_ARRAY_OFFSET = 0;
+    }
   }
 
   private UnsafeHolder() {
@@ -272,7 +304,7 @@ public abstract class UnsafeHolder {
             expectedClass.getName() + " in reallocate but was non-runnable");
       }
       newAddress = allocateMemoryUnsafe(newSize);
-      Platform.copyMemory(null, directBuffer.address(), null, newAddress,
+      copyMemory(null, directBuffer.address(), null, newAddress,
           Math.min(newLength, buffer.limit()));
     }
     // clean only after copying is done
@@ -427,6 +459,34 @@ public abstract class UnsafeHolder {
         arrayLength - offset < len) {
       throw new ArrayIndexOutOfBoundsException("Array index out of range: " +
           "length=" + arrayLength + " offset=" + offset + " length=" + len);
+    }
+  }
+
+  /**
+   * Taken from Apache Spark's org.apache.spark.unsafe.Platform.copyMemory
+   */
+  public static void copyMemory(Object src, long srcOffset, Object dst,
+      long dstOffset, long length) {
+    // Check if dstOffset is before or after srcOffset to determine if we should copy
+    // forward or backwards. This is necessary in case src and dst overlap.
+    if (dstOffset < srcOffset) {
+      while (length > 0) {
+        long size = Math.min(length, UNSAFE_COPY_THRESHOLD);
+        getUnsafe().copyMemory(src, srcOffset, dst, dstOffset, size);
+        length -= size;
+        srcOffset += size;
+        dstOffset += size;
+      }
+    } else {
+      srcOffset += length;
+      dstOffset += length;
+      while (length > 0) {
+        long size = Math.min(length, UNSAFE_COPY_THRESHOLD);
+        srcOffset -= size;
+        dstOffset -= size;
+        getUnsafe().copyMemory(src, srcOffset, dst, dstOffset, size);
+        length -= size;
+      }
     }
   }
 }

@@ -21,7 +21,6 @@ import java.nio.ByteBuffer;
 import java.util.function.BiConsumer;
 
 import com.gemstone.gemfire.internal.shared.BufferAllocator;
-import org.apache.spark.unsafe.memory.MemoryAllocator;
 
 /**
  * Generic implementation of {@link BufferAllocator} for direct ByteBuffers
@@ -98,8 +97,8 @@ public class DirectBufferAllocator extends BufferAllocator {
   @Override
   public ByteBuffer allocateForStorage(int size) {
     ByteBuffer buffer = ByteBuffer.allocateDirect(size);
-    if (MemoryAllocator.MEMORY_DEBUG_FILL_ENABLED) {
-      fill(buffer, MemoryAllocator.MEMORY_DEBUG_FILL_CLEAN_VALUE);
+    if (BufferAllocator.MEMORY_DEBUG_FILL_ENABLED) {
+      fill(buffer, BufferAllocator.MEMORY_DEBUG_FILL_CLEAN_VALUE);
     }
     return buffer;
   }
@@ -134,11 +133,11 @@ public class DirectBufferAllocator extends BufferAllocator {
       newBuffer.put(buffer);
       UnsafeHolder.releaseDirectBuffer(buffer);
       newBuffer.rewind(); // position at start as per the contract of expand
-      if (MemoryAllocator.MEMORY_DEBUG_FILL_ENABLED) {
+      if (BufferAllocator.MEMORY_DEBUG_FILL_ENABLED) {
         // fill the remaining bytes
         ByteBuffer buf = newBuffer.duplicate();
         buf.position(currentUsed);
-        fill(buf, MemoryAllocator.MEMORY_DEBUG_FILL_CLEAN_VALUE);
+        fill(buf, BufferAllocator.MEMORY_DEBUG_FILL_CLEAN_VALUE);
       }
       return newBuffer;
     } else {
