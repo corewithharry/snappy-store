@@ -256,7 +256,7 @@ public abstract class Converters {
     @Override
     public BigDecimal toBigDecimal(OptimizedElementArray row,
         int columnPosition) throws SQLException {
-      return new BigDecimal(row.getByte(columnPosition - 1));
+      return BigDecimal.valueOf(row.getByte(columnPosition - 1));
     }
     @Override
     public String toString(OptimizedElementArray row, int columnPosition,
@@ -420,7 +420,7 @@ public abstract class Converters {
     @Override
     public BigDecimal toBigDecimal(OptimizedElementArray row,
         int columnPosition) throws SQLException {
-      return new BigDecimal(row.getShort(columnPosition - 1));
+      return BigDecimal.valueOf(row.getShort(columnPosition - 1));
     }
     @Override
     public String toString(OptimizedElementArray row, int columnPosition,
@@ -585,7 +585,7 @@ public abstract class Converters {
     @Override
     public BigDecimal toBigDecimal(OptimizedElementArray row,
         int columnPosition) throws SQLException {
-      return new BigDecimal(row.getInt(columnPosition - 1));
+      return BigDecimal.valueOf(row.getInt(columnPosition - 1));
     }
     @Override
     public String toString(OptimizedElementArray row, int columnPosition,
@@ -751,7 +751,7 @@ public abstract class Converters {
     @Override
     public BigDecimal toBigDecimal(OptimizedElementArray row,
         int columnPosition) throws SQLException {
-      return new BigDecimal(row.getLong(columnPosition - 1));
+      return BigDecimal.valueOf(row.getLong(columnPosition - 1));
     }
     @Override
     public String toString(OptimizedElementArray row, int columnPosition,
@@ -918,7 +918,7 @@ public abstract class Converters {
     @Override
     public BigDecimal toBigDecimal(OptimizedElementArray row,
         int columnPosition) throws SQLException {
-      return new BigDecimal(row.getFloat(columnPosition - 1));
+      return BigDecimal.valueOf(row.getFloat(columnPosition - 1));
     }
     @Override
     public String toString(OptimizedElementArray row, int columnPosition,
@@ -1091,7 +1091,7 @@ public abstract class Converters {
     @Override
     public BigDecimal toBigDecimal(OptimizedElementArray row,
         int columnPosition) throws SQLException {
-      return new BigDecimal(row.getDouble(columnPosition - 1));
+      return BigDecimal.valueOf(row.getDouble(columnPosition - 1));
     }
     @Override
     public String toString(OptimizedElementArray row, int columnPosition,
@@ -1277,32 +1277,32 @@ public abstract class Converters {
     @Override
     public void setByte(OptimizedElementArray row, int columnPosition, byte x)
         throws SQLException {
-      setBigDecimal(row, columnPosition, new BigDecimal(x));
+      setBigDecimal(row, columnPosition, BigDecimal.valueOf(x));
     }
     @Override
     public void setShort(OptimizedElementArray row, int columnPosition, short x)
         throws SQLException {
-      setBigDecimal(row, columnPosition, new BigDecimal(x));
+      setBigDecimal(row, columnPosition, BigDecimal.valueOf(x));
     }
     @Override
     public void setInteger(OptimizedElementArray row, int columnPosition, int x)
         throws SQLException {
-      setBigDecimal(row, columnPosition, new BigDecimal(x));
+      setBigDecimal(row, columnPosition, BigDecimal.valueOf(x));
     }
     @Override
     public void setLong(OptimizedElementArray row, int columnPosition, long x)
         throws SQLException {
-      setBigDecimal(row, columnPosition, new BigDecimal(x));
+      setBigDecimal(row, columnPosition, BigDecimal.valueOf(x));
     }
     @Override
     public void setFloat(OptimizedElementArray row, int columnPosition, float x)
         throws SQLException {
-      setBigDecimal(row, columnPosition, new BigDecimal(x));
+      setBigDecimal(row, columnPosition, BigDecimal.valueOf(x));
     }
     @Override
     public void setDouble(OptimizedElementArray row, int columnPosition, double x)
         throws SQLException {
-      setBigDecimal(row, columnPosition, new BigDecimal(x));
+      setBigDecimal(row, columnPosition, BigDecimal.valueOf(x));
     }
     @Override
     public final void setBigDecimal(OptimizedElementArray row,
