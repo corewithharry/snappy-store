@@ -123,7 +123,7 @@ const boost::optional<ControlConnection&> ControlConnection::getOrCreateControlC
     }
   }
 
-    // first attempt of creating connection
+  {  // first attempt of creating connection
     // if we reached here, then need to create a new ControlConnection
     std::unique_ptr<ControlConnection> controlConn(
         new ControlConnection(service));
@@ -143,7 +143,8 @@ const boost::optional<ControlConnection&> ControlConnection::getOrCreateControlC
       }
     }
     s_allConnections.push_back(std::move(controlConn));
-    return *s_allConnections.back();
+  }
+  return *s_allConnections.back();
 }
 
 void ControlConnection::getLocatorPreferredServer(
