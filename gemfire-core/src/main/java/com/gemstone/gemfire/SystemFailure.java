@@ -317,7 +317,8 @@ public final class SystemFailure {
   public static boolean isJVMFailureError(Error err) {
     // all VirtualMachineErrors are not fatal to the JVM, in particular
     // StackOverflowError is not
-    if (err instanceof OutOfMemoryError) {
+    if (err instanceof OutOfMemoryError &&
+        !err.getClass().getName().contains("SparkOutOfMemoryError")) {
       if (SKIP_OOME.get() == Boolean.TRUE) return false;
       // ignore OOMEs thrown by Spark
       String message = err.getMessage();
