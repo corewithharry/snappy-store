@@ -40,6 +40,7 @@
 
 package com.pivotal.gemfirexd.internal.impl.jdbc;
 
+import java.util.Optional;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.sql.DatabaseMetaData;
@@ -103,24 +104,25 @@ import com.pivotal.gemfirexd.internal.impl.sql.execute.GenericExecutionFactory;
  *
  * @see <a href="http://java.sun.com/products/jdbc/download.html#corespec30">JDBC 3.0 Specification</a>
  */
-public class EmbedDatabaseMetaData extends ConnectionChild 
+public class EmbedDatabaseMetaData extends ConnectionChild
 	implements DatabaseMetaData, java.security.PrivilegedAction {
 
     private static final int ILLEGAL_UDT_TYPE = 0;
-    
+    public static final String METADATACASE_LOWER_PROP = "metadatacase.lower";
+
 	/*
 	** Property and values related to using
 	** stored prepared statements for metatdata.
 	*/
 
 	private final String url;
-	
+
 	/*
 	** Set to true if metadata is off
 	*/
 
 	private	GenericConstantActionFactory	constantActionFactory;
-    
+
 	//////////////////////////////////////////////////////////////
 	//
 	// CONSTRUCTORS
@@ -129,7 +131,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	/**
 	    @exception SQLException on error
 	 */
-	public EmbedDatabaseMetaData (EmbedConnection connection, String url) 
+	public EmbedDatabaseMetaData (EmbedConnection connection, String url)
 		throws SQLException {
 
 	    super(connection);
@@ -141,24 +143,38 @@ public class EmbedDatabaseMetaData extends ConnectionChild
     private static Properties queryDescriptions;
     /** Cached query descriptions from metadata_net.properties. */
     private static Properties queryDescriptions_net;
-    /**
-     * Return all queries found in either metadata.properties or
-     * metadata_net.properties.
+    /** Cached query descriptions from metadata_lc.properties. */
+    private static Properties queryDescriptions_lc;
+
+	/**
+     * Return all queries found in either metadata.properties,
+     * metadata_net.properties or metadata_lc.properties.
      *
      * @param net if <code>true</code>, read metadata_net.properties;
      * otherwise, read metadata.properties.
      * @return a <code>Properties</code> value with the queries
      */
     private Properties getQueryDescriptions(boolean net) {
-        Properties p = net ? queryDescriptions_net : queryDescriptions;
-        if (p != null) {
-            return p;
-        }
-        loadQueryDescriptions();
-        return net ? queryDescriptions_net : queryDescriptions;
+        return Optional.ofNullable(getProperties(net)).orElseGet(() -> {
+            loadQueryDescriptions();
+            return getProperties(net);
+        });
     }
 
-    /**
+    private Properties getProperties(boolean net) {
+        Properties p;
+        if (net) {
+            p = queryDescriptions_net;
+        } else if (System.getProperty(METADATACASE_LOWER_PROP) != null
+            && getLanguageConnectionContext().isQueryRoutingFlagTrue()) {
+            p = queryDescriptions_lc;
+        } else {
+            p = queryDescriptions;
+        }
+        return p;
+    }
+
+  /**
      * Read the query descriptions from metadata.properties and
      * metadata_net.properties. This method must be invoked from
      * within a privileged block.
@@ -166,7 +182,8 @@ public class EmbedDatabaseMetaData extends ConnectionChild
     private void PBloadQueryDescriptions() {
         String[] files = {
             "metadata.properties",
-            "/com/pivotal/gemfirexd/internal/impl/sql/catalog/metadata_net.properties"
+            "/com/pivotal/gemfirexd/internal/impl/sql/catalog/metadata_net.properties",
+            "metadata_lc.properties",
         };
         Properties[] props = new Properties[files.length];
         for (int i = 0; i < files.length; ++i) {
@@ -182,8 +199,9 @@ public class EmbedDatabaseMetaData extends ConnectionChild
                 }
             }
         }
-        queryDescriptions = props[0];
-        queryDescriptions_net = props[1];
+		queryDescriptions = props[0];
+		queryDescriptions_net = props[1];
+		queryDescriptions_lc = props[2];
     }
 
 	//////////////////////////////////////////////////////////////
@@ -475,7 +493,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 
     /**
      * Get a comma separated list of JDBC escaped numeric functions.
-     * Must be a complete or sub set of functions in appendix C.1 
+     * Must be a complete or sub set of functions in appendix C.1
      * of JDBC 3.0 specification (pp. 183).
      * @return the list
      */
@@ -769,7 +787,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Is the ANSI92 intermediate SQL grammar supported?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsANSI92IntermediateSQL() {
 		return false;
@@ -779,7 +797,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Is the ANSI92 full SQL grammar supported?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsANSI92FullSQL() {
 		return false;
@@ -789,7 +807,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Is the SQL Integrity Enhancement Facility supported?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsIntegrityEnhancementFacility() {
 		return false;
@@ -799,7 +817,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Is some form of outer join supported?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsOuterJoins() {
 		return true;
@@ -809,7 +827,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Are full nested outer joins supported?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsFullOuterJoins()  {
 		return true; // supported in Spark
@@ -820,7 +838,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * if supportFullOuterJoins is true.)
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsLimitedOuterJoins() {
 		return true;
@@ -830,7 +848,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * What's the database vendor's preferred term for "schema"?
      *
      * @return the vendor term
-	 * 
+	 *
      */
 	public String getSchemaTerm() {
 		return "SCHEMA";
@@ -840,7 +858,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * What's the database vendor's preferred term for "procedure"?
      *
      * @return the vendor term
-	 * 
+	 *
      */
 	public String getProcedureTerm() {
 		return "PROCEDURE";
@@ -850,7 +868,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * What's the database vendor's preferred term for "catalog"?
      *
      * @return the vendor term
-	 * 
+	 *
      */
 	public String getCatalogTerm() {
 		return "CATALOG";
@@ -861,7 +879,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * (Otherwise it appears at the end)
      *
      * @return true if it appears at the start
-	 * 
+	 *
      */
 	public boolean isCatalogAtStart() {
 		return false;
@@ -871,7 +889,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * What's the separator between catalog and table name?
      *
      * @return the separator string
-	 * 
+	 *
      */
 	public String getCatalogSeparator() {
 		return "";
@@ -881,7 +899,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Can a schema name be used in a data manipulation statement?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsSchemasInDataManipulation() {
 		return true;
@@ -891,7 +909,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Can a schema name be used in a procedure call statement?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsSchemasInProcedureCalls() {
 		return true;
@@ -901,7 +919,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Can a schema name be used in a table definition statement?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsSchemasInTableDefinitions() {
 		return true;
@@ -920,7 +938,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Can a schema name be used in a privilege definition statement?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsSchemasInPrivilegeDefinitions() {
 		return true;
@@ -930,7 +948,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Can a catalog name be used in a data manipulation statement?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsCatalogsInDataManipulation() {
 		return false;
@@ -940,7 +958,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Can a catalog name be used in a procedure call statement?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsCatalogsInProcedureCalls() {
 		return false;
@@ -950,7 +968,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Can a catalog name be used in a table definition statement?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean supportsCatalogsInTableDefinitions() {
 		return false;
@@ -1361,7 +1379,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * @param level the values are defined in java.sql.Connection
      * @return true if so
      * @see Connection
-		*/	
+		*/
 	public boolean supportsTransactionIsolationLevel(int level)
 							 {
 		// REMIND: This is hard-coded for the moment because it doesn't nicely
@@ -1400,8 +1418,8 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	      level == Connection.TRANSACTION_REPEATABLE_READ ||
 	      level == Connection.TRANSACTION_READ_UNCOMMITTED ||
 	      level == Connection.TRANSACTION_NONE);
-    
-    // GemStone changes END 
+
+    // GemStone changes END
 	}
 
     /**
@@ -1433,7 +1451,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * transaction to commit?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean dataDefinitionCausesTransactionCommit() {
 		return false;
@@ -1442,7 +1460,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Is a data definition statement within a transaction ignored?
      *
      * @return true if so
-	 * 
+	 *
      */
 	public boolean dataDefinitionIgnoredInTransactions(){
 		return false;
@@ -1472,7 +1490,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      *      <LI> procedureNoResult - Does not return a result
      *      <LI> procedureReturnsResult - Returns a result
      *      </UL>
-     *  <LI><B>SPECIFIC_NAME</B> String => The name which uniquely 
+     *  <LI><B>SPECIFIC_NAME</B> String => The name which uniquely
      *  identifies this procedure within its schema (since JDBC 4.0)
      *  </OL>
      *
@@ -1508,7 +1526,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 		return doGetProcs(catalog, schemaPattern,
 			procedureNamePattern, "odbc_getProcedures");
 	}
-    
+
     /**
      * Implements DatabaseMetaData.getFunctions() for an embedded
      * database. Queries the database to get information about
@@ -1520,11 +1538,11 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * does not have an SPS, and will be available as soon as any
      * database, new or old, is booted with the new version of Derby,
      * (in <b>soft and hard</b> upgrade).
-     * @param catalog limit the search to functions in this catalog 
+     * @param catalog limit the search to functions in this catalog
      * (not used)
-     * @param schemaPattern limit the search to functions in schemas 
+     * @param schemaPattern limit the search to functions in schemas
      * matching this pattern
-     * @param functionNamePattern limit the search to functions 
+     * @param functionNamePattern limit the search to functions
      * matching this pattern
      * @return a ResultSet with metadata information
      * @throws SQLException if any of the underlying jdbc methods fail
@@ -1674,13 +1692,13 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	public ResultSet getFunctionColumns(String catalog,
 										   String schemaPattern,
 										   String functionNamePattern,
-										   String parameterNamePattern) 
+										   String parameterNamePattern)
 		throws SQLException {
 
-        return doGetProcCols(catalog, 
+        return doGetProcCols(catalog,
                              schemaPattern,
-                             functionNamePattern, 
-                             parameterNamePattern,	
+                             functionNamePattern,
+                             parameterNamePattern,
                              "getFunctionColumns");
 	}
 
@@ -1697,7 +1715,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 			String queryName) throws SQLException {
 
 		PreparedStatement s = getPreparedQuery(queryName);
-		// 
+		//
                 // catalog is not part of the query
                 //
 		s.setString(1, swapNull(schemaPattern));
@@ -1757,32 +1775,32 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 		s.setString(2, swapNull(schemaPattern));
 		s.setString(3, swapNull(tableNamePattern));
 		//IMPORTANT
-		//Whenever a new table type is added to Derby, the sql for 
-		//getTables in metadata.properties will have to change and the 
-		//following if else will need to be modified too. 
+		//Whenever a new table type is added to Derby, the sql for
+		//getTables in metadata.properties will have to change and the
+		//following if else will need to be modified too.
 		//
-		//The getTables sql in metadata.properties has following clause 
+		//The getTables sql in metadata.properties has following clause
 		//TABLETYPE IN (?, ?, ?, ?)
-		//There are 4?s for IN list because Derby supports 4 tables types 
+		//There are 4?s for IN list because Derby supports 4 tables types
 		//at the moment which are 'T','S','V' and 'A'.
 		//Anytime a new table type is added, an additional ? should be
-		//added to the above clause. In addition, the following code will 
-		//have to change too because it will need to set value for that 
+		//added to the above clause. In addition, the following code will
+		//have to change too because it will need to set value for that
 		//additional ?.
 		//
 		//Following explains the logic for table types handling.
 		//If the user has asked for specific table types in getTables,
 		//then the "if" statement below will use those types values
-		//for ?s. If there are still some ?s in the IN list that are left 
+		//for ?s. If there are still some ?s in the IN list that are left
 		//with unassigned values, then we will set those ? to NULL.
 		// So paramter 4 will be "T" for TABLE, 5 will be "V" for VIEW, 6 will be
-		// "A" for SYNONYM, 7 will be "S" for system table in 
+		// "A" for SYNONYM, 7 will be "S" for system table in
 		//TABLETYPE IN (?, ?, ?, ?)
 		// If the user hasn't asked for any specific table types then all
 		// four values will be set.
-		// When a new table type is added to Derby we will have to add a 
+		// When a new table type is added to Derby we will have to add a
 		// parameter to the metadata statement and handle it here.
-		
+
 		// Array for type parameters
 		//GemStone changes BEGIN
 		/* Original code
@@ -1792,13 +1810,13 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 		boolean hasVTI = false;
 		//GemStone changes END
 
-		if (types == null)  {// null means all types 
+		if (types == null)  {// null means all types
 			types = new String[] {"TABLE","VIEW","SYNONYM","SYSTEM TABLE","VIRTUAL TABLE"};
 		}
 		String[] typeParams = new String[numberOfTableTypesInDerby];
 		for (int i=0; i < numberOfTableTypesInDerby;i++)
 			typeParams[i] = null;
-		
+
 		for (int i = 0; i<types.length; i++) {
 			String type = StringUtil.SQLToUpperCase(types[i].trim());
 			// TABLE refers to all table types except system and virtual tables
@@ -1838,15 +1856,15 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 			//GemStone changes END
 			// If user puts in other types we simply ignore.
 			}
-		
+
 		// 	TABLETYPE IN (?,?,?,?) starts at parameter 4 so we add 4
 		// Set to value passed in or null if no value was given.
 		for (int i=0; i < numberOfTableTypesInDerby; i++)
 			if (typeParams[i] == null)
 				s.setNull(i+4,Types.CHAR);
 			else
-				s.setString(i+4,typeParams[i]);	
-					
+				s.setString(i+4,typeParams[i]);
+
 		// add schema/table again for hive tables
 		s.setString(numberOfTableTypesInDerby + 4, swapNull(schemaPattern));
 		s.setString(numberOfTableTypesInDerby + 5, swapNull(tableNamePattern));
@@ -2221,11 +2239,11 @@ public class EmbedDatabaseMetaData extends ConnectionChild
             throw Util.generateCsSQLException(
                            SQLState.TABLE_NAME_CANNOT_BE_NULL);
         }
-        
+
 		int nullableInIntForm = 0;
 		if (nullable)
 			nullableInIntForm = 1;
-      
+
 		if (catalogPattern == null)
 		{
 			catalogPattern = "%";
@@ -2237,30 +2255,30 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 
 			PreparedStatement ps;
 			boolean done;
-	
+
 			// scope value is bad, return an empty result
 			if (scope < 0 || scope > 2) {
 				ps = getPreparedQuery("getBestRowIdentifierEmpty");
 				return ps.executeQuery();
 			}
-	
+
 			// see if there is a primary key, use it.
 			ps = getPreparedQuery("getBestRowIdentifierPrimaryKey");
 			ps.setString(1,catalogPattern);
 			ps.setString(2,schemaPattern);
 			ps.setString(3,table);
-	
+
 			ResultSet rs = ps.executeQuery();
 			done = rs.next();
 			String constraintId = "";
 			if (done) {
 			    constraintId = rs.getString(1);
 			}
-	
+
 			rs.close();
 			ps.close();
-	
-			if (done) 
+
+			if (done)
 			{
 				// this one's it, do the real thing and return it.
 				// we don't need to check catalog, schema, table name
@@ -2272,13 +2290,13 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 				// so we skip the nullOk parameter.
 				return ps.executeQuery();
 			}
-	
+
 			// get the unique constraint with the fewest columns.
 			ps = getPreparedQuery("getBestRowIdentifierUniqueConstraint");
 			ps.setString(1,catalogPattern);
 			ps.setString(2,schemaPattern);
 			ps.setString(3,table);
-	
+
 			rs = ps.executeQuery();
 			done = rs.next();
 			if (done) {
@@ -2288,10 +2306,10 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 			// and toss out constraints with null columns if they aren't
 			// desired... recode this as a WHILE returning at the
 			// first match or falling off the end.
-	
+
 			rs.close();
 			ps.close();
-			if (done) 
+			if (done)
 			{
 				// this one's it, do the real thing and return it.
 				ps = getPreparedQuery(queryPrefix + "getBestRowIdentifierUniqueKeyColumns");
@@ -2300,15 +2318,15 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 				ps.setInt(3,nullableInIntForm);
 				return ps.executeQuery();
 			}
-	
-	
+
+
 			// second-to last try -- unique index with minimal # columns
 			// (only non null columns if so required)
 			ps = getPreparedQuery("getBestRowIdentifierUniqueIndex");
 			ps.setString(1,catalogPattern);
 			ps.setString(2,schemaPattern);
 			ps.setString(3,table);
-	
+
 			rs = ps.executeQuery();
 			done = rs.next();
 			long indexNum = 0;
@@ -2319,7 +2337,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 			// and toss out constraints with null columns if they aren't
 			// desired... recode this as a WHILE returning at the
 			// first match or falling off the end.
-	
+
 			rs.close();
 			ps.close();
 			if (done) {
@@ -2402,7 +2420,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
             throw Util.generateCsSQLException(
                            SQLState.TABLE_NAME_CANNOT_BE_NULL);
         }
-        
+
 		PreparedStatement s = getPreparedQuery(queryName);
 		s.setString(1, swapNull(catalog));
 		s.setString(2, swapNull(schema));
@@ -2411,19 +2429,19 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	}
 
     /**
-     * check if the dictionary is at the same version as the engine. If not, 
+     * check if the dictionary is at the same version as the engine. If not,
      * then that means stored versions of the JDBC database metadata queries
      * may not be compatible with this version of the software.
-     * This can happen if we are in soft upgrade mode. Since in soft upgrade 
-     * mode, we can't change these stored metadata queries in a backward 
-     * incompatible way, engine needs to read the metadata sql from 
+     * This can happen if we are in soft upgrade mode. Since in soft upgrade
+     * mode, we can't change these stored metadata queries in a backward
+     * incompatible way, engine needs to read the metadata sql from
      * metadata.properties or metadata_net.properties file rather than
      * rely on system tables.
-     * 
+     *
      * @return true if we are not in soft upgrade mode
      * @throws SQLException
      */
-	private boolean notInSoftUpgradeMode() 
+	private boolean notInSoftUpgradeMode()
 		throws SQLException {
 		if ( getEmbedConnection().isClosed())
 			throw Util.noCurrentConnection();
@@ -2438,8 +2456,8 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 		}
 		return notInSoftUpgradeMode;
 	}
-	
-	
+
+
     /**
      * Get a description of a table's primary key columns.  They
      * are ordered by COLUMN_NAME.
@@ -2475,7 +2493,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 		s.setString(2, swapNull(schema));
 		s.setString(3, table); //DERBY-1484: Must match table name as stored
 		return s.executeQuery();
-	}	
+	}
 
 	/**
      * Get a description of the primary key columns that are
@@ -2946,7 +2964,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * Does the database support the given result set type?
      *
      * @param type defined in java.sql.ResultSet
-     * @return true if so 
+     * @return true if so
      * @see Connection
      */
 	public boolean supportsResultSetType(int type) {
@@ -2966,7 +2984,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      *
      * @param type defined in java.sql.ResultSet
      * @param concurrency type defined in java.sql.ResultSet
-     * @return true if so 
+     * @return true if so
      * @see Connection
      */
 	public boolean supportsResultSetConcurrency(int type, int concurrency) {
@@ -2997,7 +3015,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
  			return false;
  		}
 	}
- 
+
     /**
      * JDBC 2.0
      *
@@ -3013,7 +3031,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
  			return false;
  		}
 	}
- 
+
      /**
       * JDBC 2.0
       *
@@ -3026,8 +3044,8 @@ public class EmbedDatabaseMetaData extends ConnectionChild
  		return false;
   	}
 
-      // Since Derby materializes a forward only ResultSet incrementally, it is 
-      // possible to see changes made by others and hence following 3 metadata 
+      // Since Derby materializes a forward only ResultSet incrementally, it is
+      // possible to see changes made by others and hence following 3 metadata
       // calls will return true for forward only ResultSets.
 
       /**
@@ -3075,7 +3093,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
     /**
      * JDBC 2.0
      *
-     * Determine whether or not a visible row update can be detected by 
+     * Determine whether or not a visible row update can be detected by
      * calling ResultSet.rowUpdated().
      *
      * @param type result set type, i.e. ResultSet.TYPE_XXX
@@ -3140,12 +3158,12 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * JDBC 2.0
      *
      * Get a description of the user-defined types defined in a particular
-     * schema.  Schema specific UDTs may have type JAVA_OBJECT, STRUCT, 
+     * schema.  Schema specific UDTs may have type JAVA_OBJECT, STRUCT,
      * or DISTINCT.
      *
-     * <P>Only types matching the catalog, schema, type name and type  
-     * criteria are returned.  They are ordered by DATA_TYPE, TYPE_SCHEM 
-     * and TYPE_NAME.  The type name parameter may be a fully qualified 
+     * <P>Only types matching the catalog, schema, type name and type
+     * criteria are returned.  They are ordered by DATA_TYPE, TYPE_SCHEM
+     * and TYPE_NAME.  The type name parameter may be a fully qualified
      * name.  In this case, the catalog and schemaPattern parameters are
      * ignored.
      *
@@ -3155,7 +3173,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      *	<LI><B>TYPE_SCHEM</B> String => type's schema (may be null)
      *	<LI><B>TYPE_NAME</B> String => type name
      *  <LI><B>CLASS_NAME</B> String => Java class name
-     *	<LI><B>DATA_TYPE</B> String => type value defined in java.sql.Types.  
+     *	<LI><B>DATA_TYPE</B> String => type value defined in java.sql.Types.
      *  One of JAVA_OBJECT, STRUCT, or DISTINCT
      *	<LI><B>REMARKS</B> String => explanatory comment on the type
      *  <LI><B>BASE_TYPE</B> short => type code of the source type of
@@ -3175,12 +3193,12 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      * without a schema
      * @param typeNamePattern a type name pattern; may be a fully qualified
      * name
-     * @param types a list of user-named types to include (JAVA_OBJECT, 
-     * STRUCT, or DISTINCT); null returns all types 
+     * @param types a list of user-named types to include (JAVA_OBJECT,
+     * STRUCT, or DISTINCT); null returns all types
      * @return ResultSet - each row is a type description
      * @exception SQLException if a database-access error occurs.
      */
-    public ResultSet getUDTs(String catalog, String schemaPattern, 
+    public ResultSet getUDTs(String catalog, String schemaPattern,
 		      String typeNamePattern, int[] types)
       throws SQLException
     {
@@ -3305,7 +3323,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	public boolean supportsGetGeneratedKeys()
 	{
                /*
-                * Currently reverting the returned value to false until there 
+                * Currently reverting the returned value to false until there
                 * is more support for autogenerated keys in Derby.
                 * (such as support for specifying the returned columns for
                 * the autogenerated key)
@@ -3511,7 +3529,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	{
         return getSimpleQuery("getAttributes");
 	}
-	
+
     /////////////////////////////////////////////////////////////////////////
     //
     //  JDBC 4.0 - New public methods
@@ -3577,10 +3595,10 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 
 	//////////////////////////////////////////////////////////////
 	//
-	// MISC 
+	// MISC
 	//
 	//////////////////////////////////////////////////////////////
-	
+
     /**
      * Get metadata that the client driver will cache. The metadata is
      * fetched using SYSIBM.METADATA (found in metadata_net.properties).
@@ -3614,7 +3632,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 		PreparedStatement ps = getPreparedQuery(nameKey, net);
 		if (ps == null)
 			return null;
-	
+
 		return ps.executeQuery();
 	}
 
@@ -3641,7 +3659,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
      */
     private PreparedStatement getPreparedQueryUsingSystemTables(String nameKey,
                                                                 boolean net)
-        throws SQLException 
+        throws SQLException
 	{
 		// [snappydata] treat system procedures like other normal ones
 		String queryText = getQueryDescriptions(net).getProperty(nameKey);
@@ -3688,7 +3706,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	 * In soft upgrade mode, the queries stored in the system tables
 	 * might not be upto date with the Derby engine release because
 	 * system tables can't be modified in backward incompatible way in
-	 * soft upgrade mode. Because of this, if the database is in 
+	 * soft upgrade mode. Because of this, if the database is in
 	 * soft upgrade mode, get the queries from metadata.properties
 	 * file rather than from the system tables.
 	 *
@@ -3711,23 +3729,23 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 		PreparedStatement s;
 		//We can safely goto system table since we are not in soft upgrade
 		//mode and hence metadata sql in system tables are uptodate
-		//with this Derby release. We also need to be writable so 
+		//with this Derby release. We also need to be writable so
                 // that we can update SPS statements (DERBY-3546)
 		if (notInSoftUpgradeMode() && !isReadOnly())
 			s = getPreparedQueryUsingSystemTables(queryName, net);
 		else {
 			try {
 				//Can't use stored prepared statements because we are in soft upgrade
-				//mode or are read only, and hence need to get metadata sql from 
+				//mode or are read only, and hence need to get metadata sql from
                                 //metadata.properties file or metadata_net.properties
 				String queryText = getQueryFromDescription(queryName, net);
 				s = getEmbedConnection().prepareMetaDataStatement(queryText);
 			} catch (Throwable t) {
 				throw handleException(t);
-			} 
+			}
 		}
 		return s;
-	}	
+	}
 
     /**
      * Get a prepared query from system tables or metadata.properties.
@@ -3752,7 +3770,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	 * This method is currently coded to handle two specific queries,
 	 * getColumnPrivileges and getTablePrivileges. Derby databases that are 10.1
 	 * or earlier will not have new system tables added for 10.2 for privileges.
-	 * 
+	 *
 	 * It should be possible to automate finding closest match by generating
 	 * all Major_Minor versions between software version and dictionary version
 	 * and try each one from Dictionary version to current version. Since only
@@ -3780,17 +3798,16 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 			if (queryName.equals("getTablePrivileges"))
 				queryName = "getTablePrivileges_10_1";
 		}
-
-		return getQueryDescriptions(net).getProperty(queryName);
+        return getQueryDescriptions(net).getProperty(queryName);
 	}
 
 	/*
-	** Given a SPS name and a query text it returns a 
+	** Given a SPS name and a query text it returns a
 	** java.sql.PreparedStatement for the SPS. If the SPS
 	** doeesn't exist is created.
-	** 
+	**
 	*/
-	private PreparedStatement prepareSPS(String	spsName, 
+	private PreparedStatement prepareSPS(String	spsName,
 										 String	spsText,
 										 boolean net)
 		throws StandardException, SQLException
@@ -3814,7 +3831,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 		}
 // GemStone changes END
 		SPSDescriptor spsd = dd.getSPSDescriptor(
-										spsName, 
+										spsName,
 										net ? dd.getSysIBMSchemaDescriptor() :
 										dd.getSystemSchemaDescriptor());
 		lcc.commitNestedTransaction();
@@ -3846,7 +3863,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 		** the statement, and then send an EXECUTE
 		** statement, but we have no (easy) way of turning
 		** the statement into a java.sql.PreparedStatement.
-		*/	
+		*/
 		String queryText =
 			"EXECUTE STATEMENT " + (net ? "SYSIBM" : "SYS") +
 			".\"" + spsName + "\"";
@@ -3859,7 +3876,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 	}
 
 	/**
-	  *	Gets the constant action factory 
+	  *	Gets the constant action factory
 	  *
 	  *	@return	the constant action factory.
 	  *
@@ -3912,8 +3929,8 @@ public class EmbedDatabaseMetaData extends ConnectionChild
 		PBloadQueryDescriptions();
 		return null;
 	}
-    
-    
+
+
 // GemStone changes BEGIN
     private static final java.util.concurrent.locks.ReentrantLock spsLock =
         new java.util.concurrent.locks.ReentrantLock();
@@ -3922,20 +3939,20 @@ public class EmbedDatabaseMetaData extends ConnectionChild
     public RowIdLifetime getRowIdLifetime() throws SQLException {
       throw new AssertionError("only expected to be called in JDBC 4.0");
     }
-    
+
     public boolean supportsStoredFunctionsUsingCallSyntax() throws SQLException {
       throw new AssertionError("only expected to be called in JDBC 4.0");
     }
-    
+
     public boolean autoCommitFailureClosesAllResultSets() throws SQLException {
       throw new AssertionError("only expected to be called in JDBC 4.0");
     }
-    
+
     public boolean isWrapperFor(Class<?> interfaces) throws SQLException {
       throw new AssertionError("only expected to be called in JDBC 4.0");
     }
-    
-    public <T> T unwrap(java.lang.Class<T> interfaces) 
+
+    public <T> T unwrap(java.lang.Class<T> interfaces)
     throws SQLException{
       throw new AssertionError("only expected to be called in JDBC 4.0");
     }
@@ -3945,7 +3962,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
         String tableNamePattern, String columnNamePattern) throws SQLException {
       throw new AssertionError("only expected to be called in JDBC 4.1");
     }
-  
+
     public boolean generatedKeyAlwaysReturned() throws SQLException {
       throw new AssertionError("only expected to be called in JDBC 4.1");
     }
