@@ -706,7 +706,7 @@ public abstract class FabricServiceImpl implements FabricService {
       }
     }
     if (port <= 0) {
-      port = NETSERVER_DEFAULT_PORT;
+      port = isServer() ? NETSERVER_DEFAULT_PORT : NETSERVER_DEFAULT_PORT_LOCATOR;
     }
 
     final InetAddress listenAddress = getListenAddress(bindAddress);
@@ -731,7 +731,8 @@ public abstract class FabricServiceImpl implements FabricService {
         : new DRDANetworkInterface(listenAddress, port);
 
     int numTries = 0;
-    boolean retry = (port == NETSERVER_DEFAULT_PORT);
+    boolean retry = isServer() ? (port == NETSERVER_DEFAULT_PORT)
+        : (port == NETSERVER_DEFAULT_PORT_LOCATOR);
     // Start the netserver on the specified port. If the specified port is the
     // default port and it is already occupied by another process, try creating port
     // on an incremented number. Try this for 10 times before failing.

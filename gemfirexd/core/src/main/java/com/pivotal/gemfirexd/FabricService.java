@@ -37,6 +37,9 @@ public interface FabricService {
   /** the default port for network server */
   final static int NETSERVER_DEFAULT_PORT = 1527;
 
+  /** the default port for network server */
+  final static int NETSERVER_DEFAULT_PORT_LOCATOR = 1526;
+
   /**
    * Shutdown boolean property to enable/disable shutting down of all network
    * servers in {@link #stop(Properties)}. Default is true.

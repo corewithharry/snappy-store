@@ -459,8 +459,9 @@ public final class ClientService extends ReentrantLock implements LobService {
           if (!this.loadBalanceInitialized) {
             // set default load-balance to false for servers and true for locators
             HostAddress connectedHost = controlService.getConnectedHost(hostAddr);
-            this.loadBalance = connectedHost == null ||
-                connectedHost.getServerType() == null ||
+            // set default load-balance to true for explicit locator type, false otherwise.
+            this.loadBalance = connectedHost != null &&
+                connectedHost.getServerType() != null &&
                 connectedHost.getServerType().isThriftLocator();
             this.loadBalanceInitialized = true;
           }
