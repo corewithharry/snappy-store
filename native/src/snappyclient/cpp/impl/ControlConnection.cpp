@@ -123,7 +123,7 @@ const boost::optional<ControlConnection&> ControlConnection::getOrCreateControlC
     }
   }
 
-  if (allConnSize == 0) { // first attempt of creating connection
+  {  // first attempt of creating connection
     // if we reached here, then need to create a new ControlConnection
     std::unique_ptr<ControlConnection> controlConn(
         new ControlConnection(service));
@@ -143,16 +143,8 @@ const boost::optional<ControlConnection&> ControlConnection::getOrCreateControlC
       }
     }
     s_allConnections.push_back(std::move(controlConn));
-    return *s_allConnections.back();
-  } else {
-    thrift::SnappyException ex;
-    SnappyExceptionData snappyExData;
-    snappyExData.__set_sqlState(
-        std::string(SQLState::UNKNOWN_EXCEPTION.getSQLState()));
-    snappyExData.__set_reason("Failed to connect");
-    ex.__set_exceptionData(snappyExData);
-    throw ex;
   }
+  return *s_allConnections.back();
 }
 
 void ControlConnection::getLocatorPreferredServer(
@@ -360,10 +352,7 @@ void ControlConnection::failoverToAvailableHost(
 const thrift::SnappyException ControlConnection::unexpectedError(
     const std::exception& ex, const thrift::HostAddress& host) {
 
-  if (m_controlLocator != nullptr) {
-    m_controlLocator->getOutputProtocol()->getTransport()->close();
-    m_controlLocator.reset(nullptr);
-  }
+  close(false);
   thrift::SnappyException snappyEx;
   SnappyExceptionData snappyExData;
   snappyExData.__set_sqlState(

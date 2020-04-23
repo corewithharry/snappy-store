@@ -255,7 +255,7 @@ public abstract class Misc {
     }
   }
 
-  public static Set<DistributedMember> getLeadNode() {
+  public static Set<DistributedMember> getLeadNodes() {
     GfxdDistributionAdvisor advisor = GemFireXDUtils.getGfxdAdvisor();
     InternalDistributedSystem ids = Misc.getDistributedSystem();
     if (ids.isLoner()) {
@@ -273,6 +273,33 @@ public abstract class Misc {
       }
     }
     throw new NoMemberFoundException("SnappyData Lead node is not available");
+  }
+
+  /**
+   * Returns primary lead node if exists.
+   *
+   * @return Optional of DistributedMember representing primary lead node if primary lead exists in cluster
+   *         Optional#empty if primary lead node does not exist in cluster
+   */
+  public static Optional<DistributedMember> getPrimaryLead() {
+    try {
+      return getLeadNodes().stream().filter(dm -> GemFireXDUtils.getGfxdProfile(dm).hasSparkURL()).findFirst();
+    } catch (NoMemberFoundException ex) {
+      if (ex.getMessage().equals("SnappyData Lead node is not available")) {
+        return Optional.empty();
+      } else {
+        throw ex;
+      }
+    }
+  }
+
+  /**
+   * Check if the current member is primary lead node or not.
+   * @return true if the current memeber is primary lead node,
+   *         false otherwise
+   */
+  public static boolean isPrimaryLead(){
+    return GemFireXDUtils.getGfxdAdvisor().getMyProfile().hasSparkURL();
   }
 
   /**

@@ -34,13 +34,15 @@ public final class LeadNodeExecutionContext implements GfxdSerializable {
 
   private String username;
   private String authToken;
+  private long statementId;
 
   public LeadNodeExecutionContext() {
     this.connId = 0;
   }
 
-  public LeadNodeExecutionContext(long connId) {
+  public LeadNodeExecutionContext(long connId, long statementId) {
     this.connId = connId;
+    this.statementId = statementId;
     LanguageConnectionContext lcc = Misc.getLanguageConnectionContext();
     if (lcc != null) {
       this.username = ((GenericLanguageConnectionContext)lcc).getUserName();
@@ -60,6 +62,10 @@ public final class LeadNodeExecutionContext implements GfxdSerializable {
     return this.authToken;
   }
 
+  public Long getStatementId() {
+    return this.statementId;
+  }
+
   @Override
   public byte getGfxdID() {
     return LEAD_NODE_EXN_CTX;
@@ -75,6 +81,7 @@ public final class LeadNodeExecutionContext implements GfxdSerializable {
     out.writeLong(connId);
     DataSerializer.writeString(this.username, out);
     DataSerializer.writeString(this.authToken, out);
+    out.writeLong(statementId);
   }
 
   @Override
@@ -82,6 +89,7 @@ public final class LeadNodeExecutionContext implements GfxdSerializable {
     connId = in.readLong();
     this.username = DataSerializer.readString(in);
     this.authToken = DataSerializer.readString(in);
+    this.statementId = in.readLong();
   }
 
   @Override
