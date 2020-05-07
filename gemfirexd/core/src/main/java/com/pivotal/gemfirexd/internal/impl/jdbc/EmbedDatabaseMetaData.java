@@ -165,7 +165,7 @@ public class EmbedDatabaseMetaData extends ConnectionChild
         Properties p;
         if (net) {
             p = queryDescriptions_net;
-        } else if (System.getProperty(METADATACASE_LOWER_PROP) != null
+        } else if (System.getProperty(METADATACASE_LOWER_PROP, "false").equalsIgnoreCase("true")
             && getLanguageConnectionContext().isQueryRoutingFlagTrue()) {
             p = queryDescriptions_lc;
         } else {
